@@ -52,26 +52,25 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
- const sessionResult = await supabase.auth.getSession();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-console.log("Middleware Session:", sessionResult);
-
-const {
-  data: { user },
-} = await supabase.auth.getUser();
-
-console.log("Middleware User:", user);
-
-  // Redirect unauthenticated users
   if (
     !user &&
-    (
-      request.nextUrl.pathname.startsWith("/dashboard") ||
+    (request.nextUrl.pathname.startsWith("/dashboard") ||
       request.nextUrl.pathname.startsWith("/profile") ||
-      request.nextUrl.pathname.startsWith("/settings")
-    )
+      request.nextUrl.pathname.startsWith("/settings"))
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  if (
+    user &&
+    (request.nextUrl.pathname === "/login" ||
+      request.nextUrl.pathname === "/signup")
+  ) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;

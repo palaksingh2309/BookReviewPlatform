@@ -12,8 +12,20 @@ export async function createClient() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set() {},
-        remove() {},
+        set(name: string, value: string, options) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {
+            // Called from a Server Component — safe to ignore.
+          }
+        },
+        remove(name: string, options) {
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch {
+            // Called from a Server Component — safe to ignore.
+          }
+        },
       },
     }
   );

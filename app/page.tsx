@@ -1,225 +1,167 @@
 "use client";
 
+import Link from "next/link";
 import {
-  ArrowRight,
+  BookMarked,
   BookOpen,
-  Star,
-  Users,
-  TrendingUp,
-  Sparkles,
-  Search,
   ChevronRight,
+  MessageCircle,
+  Quote,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 
-const books = [
-  {
-    title: "Atomic Habits",
-    author: "James Clear",
-    rating: "4.9",
-    color: "from-orange-500 to-red-500",
-  },
-  {
-    title: "The Alchemist",
-    author: "Paulo Coelho",
-    rating: "4.8",
-    color: "from-yellow-500 to-orange-500",
-  },
-  {
-    title: "Dune",
-    author: "Frank Herbert",
-    rating: "4.7",
-    color: "from-purple-500 to-indigo-500",
-  },
-];
+import Footer from "../components/Footer";
+import Hero from "../components/landing/Hero";
+import Navbar from "../components/Navbar";
 
 const features = [
   {
     icon: BookOpen,
     title: "Discover Books",
-    desc: "Explore thousands of books from every genre imaginable.",
+    desc: "Browse curated lists, trending titles, and personalized recommendations tailored to your taste.",
   },
   {
-    icon: Users,
-    title: "Community",
-    desc: "Connect with readers, follow friends and join discussions.",
+    icon: MessageCircle,
+    title: "Write Reviews",
+    desc: "Share thoughtful reviews that help others find their next favorite read.",
   },
   {
     icon: TrendingUp,
-    title: "Reading Goals",
-    desc: "Track your progress with beautiful analytics.",
+    title: "Track Progress",
+    desc: "Set reading goals, log finished books, and celebrate milestones along the way.",
+  },
+  {
+    icon: Users,
+    title: "Join the Community",
+    desc: "Follow readers, discuss stories, and build your literary circle.",
+  },
+];
+
+const testimonials = [
+  {
+    quote:
+      "BookVerse turned my scattered notes into a beautiful reading journal. I love seeing my progress grow.",
+    name: "Priya Sharma",
+    role: "Avid fiction reader",
+  },
+  {
+    quote:
+      "The reviews feel genuine and the community is welcoming. I discover a new favorite book every week.",
+    name: "Marcus Chen",
+    role: "Book club organizer",
   },
 ];
 
 export default function Page() {
   return (
-    <main className="min-h-screen bg-neutral-950 text-white overflow-hidden">
-      {/* Background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute h-96 w-96 rounded-full bg-indigo-600/20 blur-[140px] top-10 left-10" />
-        <div className="absolute h-96 w-96 rounded-full bg-pink-600/20 blur-[140px] bottom-10 right-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.06),transparent_60%)]" />
+    <div className="min-h-screen overflow-x-hidden bg-neutral-950 text-white">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <div className="absolute left-[-10%] top-[-5%] h-[32rem] w-[32rem] rounded-full bg-indigo-600/20 blur-[140px]" />
+        <div className="absolute bottom-[-10%] right-[-5%] h-[32rem] w-[32rem] rounded-full bg-pink-600/15 blur-[140px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.04),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(10,10,10,0.8))]" />
       </div>
 
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl">
-            <BookOpen className="text-indigo-400" />
-            BookVerse
-          </div>
+      <Navbar />
 
-          <nav className="hidden md:flex gap-8 text-sm text-neutral-300">
-            <a href="#">Home</a>
-            <a href="#">Books</a>
-            <a href="#">Reviews</a>
-            <a href="#">Community</a>
-          </nav>
+      <main>
+        <Hero />
 
-          <button className="rounded-full bg-white text-black px-5 py-2 font-semibold hover:scale-105 transition">
-            Sign In
-          </button>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-6 py-28 grid lg:grid-cols-2 gap-16 items-center">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm">
-            <Sparkles size={16} />
-            The Modern Home for Readers
-          </span>
-
-          <h1 className="text-6xl lg:text-7xl font-black mt-8 leading-none">
-            Read.
-            <br />
-            Review.
-            <br />
-            <span className="text-transparent bg-gradient-to-r from-indigo-400 to-pink-400 bg-clip-text">
-              Connect.
-            </span>
-          </h1>
-
-          <p className="mt-8 text-neutral-400 text-lg leading-8 max-w-xl">
-            Discover books you'll love, write meaningful reviews, build your
-            reading journey and connect with readers around the world.
-          </p>
-
-          <div className="mt-10 flex gap-4">
-            <button className="rounded-full bg-indigo-600 hover:bg-indigo-500 px-6 py-4 font-semibold flex items-center gap-2">
-              Explore Books
-              <ArrowRight size={18} />
-            </button>
-
-            <button className="rounded-full border border-white/10 px-6 py-4 hover:bg-white/5">
-              Learn More
-            </button>
-          </div>
-
-          <div className="mt-12 flex gap-10">
-            <div>
-              <h2 className="text-3xl font-bold">20K+</h2>
-              <p className="text-neutral-500">Readers</p>
+        <section id="features" className="scroll-mt-28 border-y border-white/10 bg-white/[0.02] py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="font-display text-sm font-medium uppercase tracking-[0.2em] text-indigo-300">
+                Features
+              </p>
+              <h2 className="mt-4 text-4xl font-black sm:text-5xl">
+                Everything a reader needs
+              </h2>
+              <p className="mt-5 text-lg text-neutral-400">
+                Beautiful tools designed for discovering, reviewing, and sharing
+                your reading experience.
+              </p>
             </div>
 
-            <div>
-              <h2 className="text-3xl font-bold">100K+</h2>
-              <p className="text-neutral-500">Reviews</p>
-            </div>
-
-            <div>
-              <h2 className="text-3xl font-bold">50K+</h2>
-              <p className="text-neutral-500">Books</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Hero Cards */}
-        <div className="relative">
-          <div className="rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-xl p-8 shadow-2xl">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-xl">Trending Today</h3>
-
-              <Search className="text-neutral-400" />
-            </div>
-
-            <div className="mt-8 space-y-5">
-              {books.map((book) => (
-                <div
-                  key={book.title}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/30 p-4 hover:bg-white/5 transition"
-                >
-                  <div className="flex gap-4 items-center">
-                    <div
-                      className={`w-16 h-20 rounded-xl bg-gradient-to-br ${book.color}`}
-                    />
-
-                    <div>
-                      <h4 className="font-semibold">{book.title}</h4>
-                      <p className="text-sm text-neutral-400">
-                        {book.author}
-                      </p>
+            <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {features.map((feature) => {
+                const Icon = feature.icon;
+                return (
+                  <div
+                    key={feature.title}
+                    className="group rounded-3xl border border-white/10 bg-white/5 p-7 transition hover:-translate-y-1 hover:border-indigo-400/30 hover:bg-white/[0.07]"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 ring-1 ring-indigo-400/20">
+                      <Icon className="text-indigo-300" size={22} />
                     </div>
+                    <h3 className="mt-6 text-xl font-bold">{feature.title}</h3>
+                    <p className="mt-3 leading-7 text-neutral-400">
+                      {feature.desc}
+                    </p>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-                  <div className="flex items-center gap-1 text-yellow-400">
-                    <Star fill="currentColor" size={18} />
-                    {book.rating}
+        <section id="community" className="scroll-mt-28 py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid gap-8 lg:grid-cols-2">
+              {testimonials.map((item) => (
+                <div
+                  key={item.name}
+                  className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
+                >
+                  <Quote className="text-indigo-400" size={28} />
+                  <p className="mt-6 text-lg leading-8 text-neutral-300">
+                    &ldquo;{item.quote}&rdquo;
+                  </p>
+                  <div className="mt-6 border-t border-white/10 pt-6">
+                    <p className="font-semibold">{item.name}</p>
+                    <p className="text-sm text-neutral-500">{item.role}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+        </section>
 
-          <div className="absolute -right-8 -bottom-8 rounded-3xl bg-gradient-to-r from-indigo-500 to-pink-500 p-6 shadow-2xl">
-            <p className="text-sm opacity-80">Reading Streak</p>
-            <h2 className="text-4xl font-black mt-2">18 Days 🔥</h2>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="max-w-7xl mx-auto px-6 py-24">
-        <div className="text-center">
-          <h2 className="text-5xl font-black">
-            Everything a Reader Needs
-          </h2>
-
-          <p className="text-neutral-400 mt-5 max-w-2xl mx-auto">
-            Beautiful tools designed for discovering, reviewing and sharing your
-            reading experience.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 mt-20">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-
-            return (
-              <div
-                key={feature.title}
-                className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 hover:-translate-y-2 transition"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center">
-                  <Icon className="text-indigo-400" />
-                </div>
-
-                <h3 className="text-2xl font-bold mt-6">
-                  {feature.title}
-                </h3>
-
-                <p className="text-neutral-400 mt-4 leading-7">
-                  {feature.desc}
+        <section className="pb-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-indigo-600/30 via-violet-600/20 to-pink-600/20 px-8 py-16 text-center sm:px-16">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,.12),transparent_55%)]" />
+              <div className="relative">
+                <BookMarked className="mx-auto text-indigo-200" size={36} />
+                <h2 className="font-display mt-6 text-4xl font-bold sm:text-5xl">
+                  Start your reading journey today
+                </h2>
+                <p className="mx-auto mt-5 max-w-2xl text-lg text-neutral-200/80">
+                  Create a free account in seconds and join a community of readers
+                  who love discovering and discussing great books.
                 </p>
-
-                <button className="mt-8 flex items-center gap-2 text-indigo-400 font-semibold">
-                  Learn More
-                  <ChevronRight size={18} />
-                </button>
+                <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-semibold text-neutral-950 transition hover:bg-neutral-100"
+                  >
+                    Create free account
+                    <ChevronRight size={18} />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center rounded-full border border-white/20 px-8 py-4 font-semibold text-white transition hover:bg-white/10"
+                  >
+                    I already have an account
+                  </Link>
+                </div>
               </div>
-            );
-          })}
-        </div>
-      </section>
-    </main>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
   );
 }

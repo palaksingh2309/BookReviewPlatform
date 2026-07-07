@@ -1,11 +1,16 @@
+import AuthShell from "../../../components/auth/AuthShell";
 import SignupForm from "../../../components/auth/SignupForm";
 
 export default function SignupPage() {
   return (
-    <main>
-      <h1>Create your BookVerse Account</h1>
-
+    <AuthShell
+      title="Create your account"
+      subtitle="Join thousands of readers on BookVerse."
+      alternatePrompt="Already have an account?"
+      alternateHref="/login"
+      alternateLabel="Log in"
+    >
       <SignupForm />
-    </main>
+    </AuthShell>
   );
 }
