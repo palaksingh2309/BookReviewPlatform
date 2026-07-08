@@ -381,8 +381,10 @@ export default function BooksPage() {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-500 hover:text-white"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+                title="Clear search"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-500 hover:text-white"
                 >
                   <X size={16} />
                 </button>
