@@ -1,28 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
+  --background: #f8fafc;
+  /* Slate-50 */
+  --foreground: #0f172a;
+  /* Slate-900 */
+
+  /* Optional accent colors */
+  --primary: #6366f1;
+  /* Indigo */
+  --secondary: #8b5cf6;
+  /* Violet */
+  --card: #ffffff;
+  --border: #e2e8f0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-playfair);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+html {
+  scroll-behavior: smooth;
 }
+
+body {
+  background: linear-gradient(to bottom,
+      #ffffff,
+      #f8fafc,
+      #eef2ff);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+/* Hero Animations */
 
 @keyframes hero-fade-up {
   from {
     opacity: 0;
     transform: translateY(24px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -30,10 +52,12 @@ body {
 }
 
 @keyframes hero-float {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -43,22 +67,27 @@ body {
   0% {
     background-position: 200% center;
   }
+
   100% {
     background-position: -200% center;
   }
 }
 
 @keyframes hero-pulse-ring {
+
   0%,
   100% {
-    opacity: 0.4;
+    opacity: 0.3;
     transform: scale(1);
   }
+
   50% {
-    opacity: 0.15;
-    transform: scale(1.04);
+    opacity: 0.1;
+    transform: scale(1.05);
   }
 }
+
+/* Utility Classes */
 
 .hero-fade-up {
   animation: hero-fade-up 0.7s ease-out both;
@@ -89,7 +118,14 @@ body {
 }
 
 .hero-shimmer-text {
+  background: linear-gradient(90deg,
+      #4f46e5,
+      #8b5cf6,
+      #06b6d4,
+      #4f46e5);
   background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   animation: hero-shimmer 6s linear infinite;
 }
 

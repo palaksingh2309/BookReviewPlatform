@@ -29,6 +29,9 @@ export async function updateProfile(profile: {
 
   return await supabase
     .from("profiles")
-    .update(profile)
-    .eq("id", user.id);
+    .upsert({
+      id: user.id,
+      ...profile,
+      updated_at: new Date().toISOString(),
+    });
 }
