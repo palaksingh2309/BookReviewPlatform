@@ -1,18 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  /* Slate-50 */
-  --foreground: #0f172a;
-  /* Slate-900 */
-
-  /* Optional accent colors */
-  --primary: #6366f1;
-  /* Indigo */
-  --secondary: #8b5cf6;
-  /* Violet */
+  --background: #f0f6fc;
+  --foreground: #0a1730;
+  --primary: #0284c7;
+  --secondary: #14b8a6;
   --card: #ffffff;
-  --border: #e2e8f0;
+  --border: #cbdff2;
 }
 
 @theme inline {
@@ -22,6 +16,49 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-playfair);
+
+  /* Map neutral colors to a light-blue theme */
+  --color-neutral-950: #f0f6fc;
+  --color-neutral-900: #e4effa;
+  --color-neutral-800: #d8e8f8;
+  --color-neutral-700: #cbdff2;
+  --color-neutral-600: #b0ccfa;
+  --color-neutral-500: #70a6f2;
+  --color-neutral-400: #4776b0;
+  --color-neutral-300: #1e4277;
+  --color-neutral-200: #122a50;
+  --color-neutral-100: #0a1730;
+  --color-neutral-50: #050c1b;
+
+  /* Invert black and white mappings for light theme compatibility */
+  --color-white: #0a1730;
+  --color-black: #f0f6fc;
+
+  /* Light blue primary colors */
+  --color-indigo-950: #f0f9ff;
+  --color-indigo-900: #e0f2fe;
+  --color-indigo-800: #bae6fd;
+  --color-indigo-700: #0369a1;
+  --color-indigo-600: #0284c7;
+  --color-indigo-500: #0ea5e9;
+  --color-indigo-400: #38bdf8;
+  --color-indigo-300: #7dd3fc;
+  --color-indigo-200: #bae6fd;
+  --color-indigo-100: #e0f2fe;
+  --color-indigo-50: #f0f9ff;
+
+  /* Teal/cyan secondary colors */
+  --color-pink-950: #f0fdfa;
+  --color-pink-900: #ccfbf1;
+  --color-pink-800: #99f6e4;
+  --color-pink-700: #0f766e;
+  --color-pink-600: #0d9488;
+  --color-pink-500: #14b8a6;
+  --color-pink-400: #2dd4bf;
+  --color-pink-300: #5eead4;
+  --color-pink-200: #99f6e4;
+  --color-pink-100: #ccfbf1;
+  --color-pink-50: #f0fdfa;
 }
 
 html {
@@ -30,9 +67,9 @@ html {
 
 body {
   background: linear-gradient(to bottom,
-      #ffffff,
-      #f8fafc,
-      #eef2ff);
+      #f0f6fc,
+      #e4effa,
+      #d8e8f8);
   color: var(--foreground);
   min-height: 100vh;
 }

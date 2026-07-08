@@ -133,33 +133,32 @@ export default function ProfileForm() {
 
           {/* Full Name */}
           <div className="space-y-2">
-            <label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
-              <Shield size={16} className="text-indigo-400" />
-              Full Name
+            <label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium text-neutral-400">
+              <Shield size={16} className="text-neutral-500" />
+              Full Name (Read-only)
             </label>
             <input
               id="fullName"
               type="text"
-              required
+              disabled
               placeholder="e.g. Jane Doe"
               value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
+              className="w-full rounded-xl border border-white/10 bg-neutral-900/50 px-4 py-3 text-neutral-400 outline-none cursor-not-allowed opacity-60"
             />
           </div>
         </div>
 
         {/* Favorite Genre */}
         <div className="space-y-2">
-          <label htmlFor="favoriteGenre" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
-            <Heart size={16} className="text-indigo-400" />
-            Favorite Genre
+          <label htmlFor="favoriteGenre" className="flex items-center gap-2 text-sm font-medium text-neutral-400">
+            <Heart size={16} className="text-neutral-500" />
+            Favorite Genre (Read-only)
           </label>
           <select
             id="favoriteGenre"
+            disabled
             value={formData.favorite_genre}
-            onChange={(e) => setFormData({ ...formData, favorite_genre: e.target.value })}
-            className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20 appearance-none [&>option]:bg-neutral-900"
+            className="w-full rounded-xl border border-white/10 bg-neutral-900/50 px-4 py-3 text-neutral-400 outline-none cursor-not-allowed opacity-60 appearance-none [&>option]:bg-neutral-900"
           >
             <option value="" disabled>Select your favorite genre</option>
             {genres.map((g) => (
@@ -172,17 +171,17 @@ export default function ProfileForm() {
 
         {/* Bio */}
         <div className="space-y-2">
-          <label htmlFor="bio" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
-            <FileText size={16} className="text-indigo-400" />
-            Bio
+          <label htmlFor="bio" className="flex items-center gap-2 text-sm font-medium text-neutral-400">
+            <FileText size={16} className="text-neutral-500" />
+            Bio (Read-only)
           </label>
           <textarea
             id="bio"
             rows={4}
-            placeholder="Tell the community about yourself, your reading goals, or your favorite authors..."
+            disabled
+            placeholder="No biography details provided."
             value={formData.bio}
-            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-            className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20 resize-none"
+            className="w-full rounded-xl border border-white/10 bg-neutral-900/50 px-4 py-3 text-neutral-400 outline-none cursor-not-allowed opacity-60 resize-none"
           />
         </div>
 
@@ -199,7 +198,7 @@ export default function ProfileForm() {
           ) : (
             <>
               <Sparkles size={16} />
-              Save Profile Changes
+              Save Username
             </>
           )}
         </button>

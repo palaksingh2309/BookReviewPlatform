@@ -11,15 +11,12 @@ export async function getProfile() {
     .from("profiles")
     .select("*")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   return { data, error };
 }
 export async function updateProfile(profile: {
   username: string;
-  full_name: string;
-  bio: string;
-  favorite_genre: string;
 }) {
   const {
     data: { user },
@@ -29,9 +26,9 @@ export async function updateProfile(profile: {
 
   return await supabase
     .from("profiles")
-    .upsert({
-      id: user.id,
-      ...profile,
+    .update({
+      username: profile.username,
       updated_at: new Date().toISOString(),
-    });
+    })
+    .eq("id", user.id);
 }

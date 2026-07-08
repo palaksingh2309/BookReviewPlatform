@@ -19,7 +19,7 @@ export default async function ProfilePage() {
     .from("profiles")
     .select("*")
     .eq("id", user?.id || "")
-    .single();
+    .maybeSingle();
 
   const displayName = profile?.full_name || email.split("@")[0];
   const displayUsername = profile?.username ? `@${profile.username}` : "";

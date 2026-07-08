@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import SignOutButton from "../../../components/auth/SignOutButton";
+import { getWishlist, addToWishlist, removeFromWishlist } from "../../../services/wishlist";
 
 interface Book {
   id: string;
@@ -189,25 +190,29 @@ export default function BooksPage() {
   const [activeTab, setActiveTab] = useState<"all" | "trending" | "top-rated" | "wishlist">("all");
   const [wishlist, setWishlist] = useState<string[]>([]);
 
-  // Load wishlist from localStorage on mount
+  // Load wishlist from database on mount
   useEffect(() => {
     setMounted(true);
-    const saved = localStorage.getItem("bookverse_wishlist");
-    if (saved) {
+    async function loadWishlist() {
       try {
-        setWishlist(JSON.parse(saved));
+        const dbWishlist = await getWishlist();
+        setWishlist(dbWishlist);
       } catch (e) {
-        console.error("Error reading wishlist from localStorage", e);
+        console.error("Error reading wishlist from database", e);
       }
     }
+    loadWishlist();
   }, []);
 
-  const toggleWishlist = (bookId: string) => {
-    const updated = wishlist.includes(bookId)
-      ? wishlist.filter((id) => id !== bookId)
-      : [...wishlist, bookId];
-    setWishlist(updated);
-    localStorage.setItem("bookverse_wishlist", JSON.stringify(updated));
+  const toggleWishlist = async (bookId: string) => {
+    const isSaved = wishlist.includes(bookId);
+    if (isSaved) {
+      setWishlist(wishlist.filter((id) => id !== bookId));
+      await removeFromWishlist(bookId);
+    } else {
+      setWishlist([...wishlist, bookId]);
+      await addToWishlist(bookId);
+    }
   };
 
   const clearFilters = () => {
