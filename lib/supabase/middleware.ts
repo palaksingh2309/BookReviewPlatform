@@ -60,7 +60,9 @@ export async function updateSession(request: NextRequest) {
     !user &&
     (request.nextUrl.pathname.startsWith("/dashboard") ||
       request.nextUrl.pathname.startsWith("/profile") ||
-      request.nextUrl.pathname.startsWith("/settings"))
+      request.nextUrl.pathname.startsWith("/settings") ||
+      request.nextUrl.pathname.startsWith("/reading-list") ||
+      request.nextUrl.pathname.startsWith("/reviews"))
   ) {
     return NextResponse.redirect(new URL("/login", request.url));
   }

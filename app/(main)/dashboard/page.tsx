@@ -14,6 +14,7 @@ import {
 
 import SignOutButton from "../../../components/auth/SignOutButton";
 import { createClient } from "../../../lib/supabase-server";
+import { getReadingStats } from "../../../services/reading-list";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -23,6 +24,15 @@ export default async function DashboardPage() {
 
   const email = user?.email ?? "Reader";
   const username = email.split("@")[0];
+
+  const { data: stats } = user ? await getReadingStats(supabase) : { data: null };
+  const { count: reviewsCount } = user
+    ? await supabase
+        .from("reviews")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+    : { count: 0 };
+
 
   const quickActions = [
     {
@@ -120,9 +130,9 @@ export default async function DashboardPage() {
 
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               {[
-                { label: "Books read", value: "0", icon: BookOpen },
-                { label: "Reviews written", value: "0", icon: MessageSquare },
-                { label: "Reading streak", value: "0 days", icon: TrendingUp },
+                { label: "Books read", value: stats?.booksCompleted || 0, icon: BookOpen },
+                { label: "Reviews written", value: reviewsCount || 0, icon: MessageSquare },
+                { label: "Reading streak", value: `${stats?.streakDays || 0} days`, icon: TrendingUp },
               ].map((item) => {
                 const Icon = item.icon;
                 return (

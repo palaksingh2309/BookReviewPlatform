@@ -10,6 +10,8 @@ export const config = {
     "/dashboard/:path*",
     "/profile/:path*",
     "/settings/:path*",
+    "/reading-list/:path*",
+    "/reviews/:path*",
     "/login",
     "/signup",
   ],
