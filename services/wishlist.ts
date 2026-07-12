@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { Book } from "../types/book";
 
 export async function getWishlist() {
   const {
@@ -52,3 +53,21 @@ export async function removeFromWishlist(bookId: string) {
 
   return { data, error };
 }
+
+export async function getWishlistedBooks(): Promise<Book[]> {
+  const ids = await getWishlist();
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("books")
+    .select("*")
+    .in("id", ids);
+
+  if (error) {
+    console.error("Error fetching wishlisted books:", error.message);
+    return [];
+  }
+
+  return data as Book[];
+}
+

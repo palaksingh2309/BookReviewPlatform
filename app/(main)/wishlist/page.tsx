@@ -15,146 +15,30 @@ import {
 } from "lucide-react";
 
 import SignOutButton from "../../../components/auth/SignOutButton";
-import { getWishlist, removeFromWishlist as removeFromWishlistDb } from "../../../services/wishlist";
-
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  category: string;
-  rating: number;
-  reviewsCount: number;
-  publishedYear: number;
-  image: string;
-  description: string;
-}
-
-const ALL_BOOKS: Book[] = [
-  {
-    id: "atomic-habits",
-    title: "Atomic Habits",
-    author: "James Clear",
-    category: "Self Improvement",
-    rating: 4.9,
-    reviewsCount: 28450,
-    publishedYear: 2018,
-    image: "https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg",
-    description: "A practical guide to building good habits, breaking bad ones, and making tiny changes that lead to remarkable results. It explains the neurology behind habit formation and offers concrete tools.",
-  },
-  {
-    id: "the-psychology-of-money",
-    title: "The Psychology of Money",
-    author: "Morgan Housel",
-    category: "Finance",
-    rating: 4.9,
-    reviewsCount: 15430,
-    publishedYear: 2020,
-    image: "https://covers.openlibrary.org/b/isbn/9780857197689-L.jpg",
-    description: "Doing well with money isn't necessarily about what you know. It's about how you behave. Explores how emotions, behavior, and mindset influence financial success.",
-  },
-  {
-    id: "the-hobbit",
-    title: "The Hobbit",
-    author: "J.R.R. Tolkien",
-    category: "Fiction",
-    rating: 4.9,
-    reviewsCount: 31200,
-    publishedYear: 1937,
-    image: "https://covers.openlibrary.org/b/isbn/9780261103344-L.jpg",
-    description: "A fantasy novel about the quest of Bilbo Baggins to win a share of the treasure guarded by Smaug the dragon. It serves as the prelude to the epic Lord of the Rings trilogy.",
-  },
-  {
-    id: "the-alchemist",
-    title: "The Alchemist",
-    author: "Paulo Coelho",
-    category: "Fiction",
-    rating: 4.8,
-    reviewsCount: 19800,
-    publishedYear: 1988,
-    image: "https://covers.openlibrary.org/b/isbn/9780061122415-L.jpg",
-    description: "A timeless story about following your dreams, discovering your purpose, and listening to your heart. It follows a young Andalusian shepherd boy on his journey to Egypt.",
-  },
-  {
-    id: "deep-work",
-    title: "Deep Work",
-    author: "Cal Newport",
-    category: "Productivity",
-    rating: 4.8,
-    reviewsCount: 9820,
-    publishedYear: 2016,
-    image: "https://covers.openlibrary.org/b/isbn/9781455586691-L.jpg",
-    description: "Rules for focused success in a distracted world. Master the ability to focus deeply without distraction, allowing you to quickly master complicated information and produce better results.",
-  },
-  {
-    id: "think-like-a-monk",
-    title: "Think Like a Monk",
-    author: "Jay Shetty",
-    category: "Mindfulness",
-    rating: 4.8,
-    reviewsCount: 11450,
-    publishedYear: 2020,
-    image: "https://covers.openlibrary.org/b/isbn/9781982134488-L.jpg",
-    description: "Practical wisdom inspired by monk life to reduce stress, improve relationships, and find purpose. He shows how to overcome negative thoughts and find peace within ourselves.",
-  },
-  {
-    id: "dune",
-    title: "Dune",
-    author: "Frank Herbert",
-    category: "Science Fiction",
-    rating: 4.8,
-    reviewsCount: 25400,
-    publishedYear: 1965,
-    image: "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
-    description: "Set on the desert planet Arrakis, Dune is the story of the boy Paul Atreides, who would become the mysterious man known as Muad'Dib, embarking on a journey to avenge his family.",
-  },
-  {
-    id: "educated",
-    title: "Educated",
-    author: "Tara Westover",
-    category: "Biography",
-    rating: 4.7,
-    reviewsCount: 16800,
-    publishedYear: 2018,
-    image: "https://covers.openlibrary.org/b/isbn/9780399588174-L.jpg",
-    description: "An unforgettable memoir about a young girl who, kept out of school by her survivalist family in rural Idaho, leaves her home at seventeen and earns a PhD from Cambridge University.",
-  },
-  {
-    id: "rich-dad-poor-dad",
-    title: "Rich Dad Poor Dad",
-    author: "Robert T. Kiyosaki",
-    category: "Finance",
-    rating: 4.7,
-    reviewsCount: 22100,
-    publishedYear: 1997,
-    image: "https://covers.openlibrary.org/b/isbn/9781612680194-L.jpg",
-    description: "Advocates for financial literacy, financial independence, and building wealth through investing in assets, real estate, starting businesses, and increasing financial intelligence.",
-  },
-  {
-    id: "zero-to-one",
-    title: "Zero to One",
-    author: "Peter Thiel",
-    category: "Finance",
-    rating: 4.6,
-    reviewsCount: 13900,
-    publishedYear: 2014,
-    image: "https://covers.openlibrary.org/b/isbn/9780804139298-L.jpg",
-    description: "Notes on startups, or how to build the future. Explores how unique value creation and building creative monopolies are the keys to successful, game-changing business endeavors.",
-  }
-];
+import { getWishlist, getWishlistedBooks, removeFromWishlist as removeFromWishlistDb } from "../../../services/wishlist";
+import { Book } from "../../../types/book";
 
 export default function WishlistPage() {
   const [mounted, setMounted] = useState(false);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [wishlistedBooks, setWishlistedBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load wishlist from database on mount
+  // Load wishlist and book details from database on mount
   useEffect(() => {
     setMounted(true);
     async function loadWishlist() {
       try {
+        setLoading(true);
         const dbWishlist = await getWishlist();
         setWishlist(dbWishlist);
+        
+        const dbBooks = await getWishlistedBooks();
+        setWishlistedBooks(dbBooks);
       } catch (e) {
         console.error("Error reading wishlist from database", e);
+      } finally {
+        setLoading(false);
       }
     }
     loadWishlist();
@@ -162,13 +46,11 @@ export default function WishlistPage() {
 
   const removeFromWishlist = async (bookId: string) => {
     // Optimistic update
-    const updated = wishlist.filter((id) => id !== bookId);
-    setWishlist(updated);
+    const updatedIds = wishlist.filter((id) => id !== bookId);
+    setWishlist(updatedIds);
+    setWishlistedBooks(wishlistedBooks.filter((book) => book.id !== bookId));
     await removeFromWishlistDb(bookId);
   };
-
-  // Filter books down to only those in the wishlist
-  const wishlistedBooks = ALL_BOOKS.filter((book) => wishlist.includes(book.id));
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white relative">
@@ -225,7 +107,7 @@ export default function WishlistPage() {
           </p>
         </div>
 
-        {!mounted ? (
+        {loading || !mounted ? (
           <div className="flex justify-center items-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
           </div>
@@ -236,7 +118,7 @@ export default function WishlistPage() {
             </div>
             <h3 className="text-lg font-bold">Your Wishlist is Empty</h3>
             <p className="text-neutral-500 mt-2 text-sm max-w-xs leading-relaxed">
-              You haven't saved any books yet. Browse the catalog to discover and add books to your reading plans!
+              You haven''t saved any books yet. Browse the catalog to discover and add books to your reading plans!
             </p>
             <Link
               href="/books"
@@ -295,7 +177,7 @@ export default function WishlistPage() {
                         {book.title}
                       </h3>
                       <p className="text-xs text-neutral-400 mt-0.5 font-medium">
-                        by {book.author} · {book.publishedYear}
+                        by {book.author} · {book.published_year}
                       </p>
                     </div>
 

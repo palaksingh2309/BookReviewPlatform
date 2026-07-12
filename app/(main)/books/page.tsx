@@ -25,7 +25,7 @@ import {
 
 import SignOutButton from "../../../components/auth/SignOutButton";
 import { getWishlist, addToWishlist, removeFromWishlist } from "../../../services/wishlist";
-import { getBooks } from "../../../services/books";
+import { getBooks, upsertBook } from "../../../services/books";
 import { getReadingList } from "../../../services/reading-list";
 import { upsertReadingListAction, deleteReadingListAction } from "../../../actions/readingList";
 import { Book, ReadingStatus } from "../../../types/book";
@@ -49,6 +49,8 @@ export default function BooksPage() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   
   const [books, setBooks] = useState<Book[]>([]);
+  const [googleBooks, setGoogleBooks] = useState<Book[]>([]);
+  const [searching, setSearching] = useState(false);
   const [readingList, setReadingList] = useState<{ [key: string]: ReadingStatus }>({});
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -89,6 +91,71 @@ export default function BooksPage() {
     loadData();
   }, []);
 
+  // Google Books API search with debounce
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setGoogleBooks([]);
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      try {
+        setSearching(true);
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY;
+        const url = apiKey
+          ? `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=18&key=${apiKey}`
+          : `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=18`;
+
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          console.error("Google Books API error:", res.statusText);
+          return;
+        }
+
+        const data = await res.json();
+        const items = data.items || [];
+        const mapped: Book[] = [];
+        const seenIds = new Set<string>();
+
+        for (const item of items) {
+          if (!item.id || seenIds.has(item.id)) continue;
+          seenIds.add(item.id);
+
+          const volumeInfo = item.volumeInfo || {};
+          const rating = volumeInfo.averageRating || 0.0;
+          const reviews_count = volumeInfo.ratingsCount || 0;
+
+          mapped.push({
+            id: item.id,
+            title: volumeInfo.title || "Untitled",
+            author: volumeInfo.authors ? volumeInfo.authors.join(", ") : "Unknown Author",
+            category: volumeInfo.categories ? volumeInfo.categories[0] : "General",
+            rating: rating,
+            reviews_count: reviews_count,
+            published_year: volumeInfo.publishedDate
+              ? parseInt(volumeInfo.publishedDate.substring(0, 4)) || 2020
+              : 2020,
+            image: volumeInfo.imageLinks?.thumbnail ||
+                   volumeInfo.imageLinks?.smallThumbnail ||
+                   "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=300",
+            description: volumeInfo.description || "No description available.",
+            is_trending: false,
+            is_top_rated: rating >= 4.5,
+          });
+        }
+
+        setGoogleBooks(mapped);
+      } catch (err) {
+        console.error("Error searching books:", err);
+      } finally {
+        setSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
   const toggleWishlist = async (bookId: string) => {
     const isSaved = wishlist.includes(bookId);
     if (isSaved) {
@@ -96,6 +163,21 @@ export default function BooksPage() {
       await removeFromWishlist(bookId);
       showToast("Removed from Wishlist", "success");
     } else {
+      // Find the book object in our current lists (either googleBooks or local books database list)
+      const book = googleBooks.find(b => b.id === bookId) || books.find(b => b.id === bookId);
+      if (book) {
+        // Insert/upsert it into the database books table first to avoid foreign key violation
+        const { error } = await upsertBook(book);
+        if (error) {
+          showToast("Failed to save book to database", "error");
+          console.error("Error saving book:", error);
+          return;
+        }
+        // Keep it in local books state so that the catalog contains it
+        if (!books.some(b => b.id === bookId)) {
+          setBooks(prev => [...prev, book]);
+        }
+      }
       setWishlist([...wishlist, bookId]);
       await addToWishlist(bookId);
       showToast("Added to Wishlist", "success");
@@ -115,6 +197,20 @@ export default function BooksPage() {
           showToast(res.error || "Failed to remove item", "error");
         }
       } else {
+        // Find the book object
+        const book = googleBooks.find(b => b.id === bookId) || books.find(b => b.id === bookId);
+        if (book) {
+          // Insert/upsert it into the database books table first
+          const { error } = await upsertBook(book);
+          if (error) {
+            showToast("Failed to save book to database", "error");
+            console.error("Error saving book:", error);
+            return;
+          }
+          if (!books.some(b => b.id === bookId)) {
+            setBooks(prev => [...prev, book]);
+          }
+        }
         const res = await upsertReadingListAction({
           book_id: bookId,
           status,
@@ -150,11 +246,14 @@ export default function BooksPage() {
   };
 
   // Filter books dynamically based on states
-  const filteredBooks = books.filter((book) => {
-    const matchesSearch =
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const activeBooksSource = searchQuery.trim() ? googleBooks : books;
+
+  const filteredBooks = activeBooksSource.filter((book) => {
+    const matchesSearch = searchQuery.trim()
+      ? true // Google Books already matches search query
+      : (book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+         book.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesCategory =
       selectedCategory === "All" || book.category === selectedCategory;
@@ -162,7 +261,7 @@ export default function BooksPage() {
     const matchesTab =
       activeTab === "all" ||
       (activeTab === "trending" && book.is_trending) ||
-      (activeTab === "top-rated" && book.rating >= 4.8) ||
+      (activeTab === "top-rated" && book.rating >= 4.5) ||
       (activeTab === "wishlist" && wishlist.includes(book.id));
 
     return matchesSearch && matchesCategory && matchesTab;
@@ -414,7 +513,7 @@ export default function BooksPage() {
             </h2>
           </div>
 
-          {loading ? (
+          {loading || searching ? (
             // Loading Skeletons
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((i) => (

@@ -80,6 +80,16 @@ DROP POLICY IF EXISTS "Books can only be modified by admins" ON public.books;
 CREATE POLICY "Books can only be modified by admins" ON public.books 
     FOR ALL USING (false);
 
+-- Enable authenticated users to insert and update books found via Google Books API search
+DROP POLICY IF EXISTS "Authenticated users can insert books" ON public.books;
+CREATE POLICY "Authenticated users can insert books" ON public.books 
+    FOR INSERT TO authenticated WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authenticated users can update books" ON public.books;
+CREATE POLICY "Authenticated users can update books" ON public.books 
+    FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+
 -- Reading list policies
 DROP POLICY IF EXISTS "Reading list entries are viewable by owner only" ON public.reading_list;
 CREATE POLICY "Reading list entries are viewable by owner only" ON public.reading_list 
