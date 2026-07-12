@@ -21,6 +21,7 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  MessageSquare,
 } from "lucide-react";
 
 import SignOutButton from "../../../components/auth/SignOutButton";
@@ -29,6 +30,7 @@ import { getBooks, upsertBook } from "../../../services/books";
 import { getReadingList } from "../../../services/reading-list";
 import { upsertReadingListAction, deleteReadingListAction } from "../../../actions/readingList";
 import { Book, ReadingStatus } from "../../../types/book";
+import { getKeywordsFromDescription } from "../../../utils/helpers";
 
 const CATEGORIES = [
   "All",
@@ -51,6 +53,7 @@ export default function BooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [googleBooks, setGoogleBooks] = useState<Book[]>([]);
   const [searching, setSearching] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [readingList, setReadingList] = useState<{ [key: string]: ReadingStatus }>({});
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -304,6 +307,13 @@ export default function BooksPage() {
           </Link>
           <nav className="flex items-center gap-2">
             <Link
+              href="/feed"
+              className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"
+              aria-label="Community Feed"
+            >
+              <MessageSquare size={18} />
+            </Link>
+            <Link
               href="/profile"
               className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"
               aria-label="Profile"
@@ -346,7 +356,11 @@ export default function BooksPage() {
             <div className="relative grid gap-8 md:grid-cols-12 items-center">
               {/* Cover Column */}
               <div className="md:col-span-4 flex justify-center">
-                <div className="relative w-44 h-64 md:w-52 md:h-76 shadow-2xl rounded-xl overflow-hidden transition-transform duration-500 group-hover:scale-105">
+                <div 
+                  onClick={() => setSelectedBook(featuredBook)}
+                  className="relative w-44 h-64 md:w-52 md:h-76 shadow-2xl rounded-xl overflow-hidden transition-transform duration-500 group-hover:scale-105 cursor-pointer"
+                  title="View details"
+                >
                   <Image
                     src={featuredBook.image}
                     alt={featuredBook.title}
@@ -365,7 +379,11 @@ export default function BooksPage() {
                   <Sparkles size={12} className="animate-pulse" />
                   Featured Pick of the Month
                 </div>
-                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+                <h2 
+                  onClick={() => setSelectedBook(featuredBook)}
+                  className="text-3xl md:text-4xl font-extrabold tracking-tight hover:text-indigo-400 transition cursor-pointer"
+                  title="View details"
+                >
                   {featuredBook.title}
                 </h2>
                 <p className="text-neutral-400 font-medium text-sm md:text-base">
@@ -388,6 +406,13 @@ export default function BooksPage() {
                 </p>
                 
                 <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    onClick={() => setSelectedBook(featuredBook)}
+                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 border border-transparent px-5 py-2.5 rounded-xl font-semibold transition text-sm text-white shadow-lg shadow-indigo-600/10"
+                  >
+                    <Sparkles size={14} />
+                    View Details
+                  </button>
                   <button 
                     onClick={() => toggleWishlist(featuredBook.id)}
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all duration-300 border text-sm ${
@@ -557,7 +582,11 @@ export default function BooksPage() {
                   >
                     <div className="absolute inset-0 border border-transparent group-hover:border-indigo-500/10 rounded-2xl transition duration-300 pointer-events-none" />
 
-                    <div>
+                    <div 
+                      onClick={() => setSelectedBook(book)}
+                      className="cursor-pointer"
+                      title="View details"
+                    >
                       {/* Image / Cover Wrapper */}
                       <div className="relative h-64 w-full bg-neutral-900 overflow-hidden flex items-center justify-center">
                         <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/70 via-transparent to-transparent z-10" />
@@ -586,7 +615,10 @@ export default function BooksPage() {
 
                           {/* Wishlist Button */}
                           <button
-                            onClick={() => toggleWishlist(book.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleWishlist(book.id);
+                            }}
                             className={`p-2 rounded-lg backdrop-blur-md shadow-lg border transition ${
                               isSaved
                                 ? "bg-rose-500/20 text-rose-400 border-rose-500/30 hover:bg-rose-500/30"
@@ -629,7 +661,7 @@ export default function BooksPage() {
                     {/* Bottom Actions */}
                     <div className="px-5 pb-5 pt-2 space-y-2">
                       {/* Reading Status Selector dropdown */}
-                      <div className="relative">
+                      <div className="relative" onClick={(e) => e.stopPropagation()}>
                         <select
                           value={currentStatus || ""}
                           onChange={(e) => {
@@ -653,6 +685,7 @@ export default function BooksPage() {
 
                       <Link
                         href={`/reviews?book=${book.id}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 py-2.5 text-xs font-semibold transition duration-300 text-white"
                       >
                         Read Reviews & Write
@@ -666,6 +699,138 @@ export default function BooksPage() {
           )}
         </section>
       </main>
+
+      {/* Book Detail Modal */}
+      {selectedBook && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/10 bg-neutral-900 text-white shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-10 duration-300 flex flex-col md:flex-row">
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedBook(null)}
+              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-neutral-950/60 hover:bg-white/10 text-neutral-400 hover:text-white transition-all border border-white/10"
+              aria-label="Close details"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Left/Top Cover Panel */}
+            <div className="md:w-2/5 bg-neutral-950/50 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-white/10 shrink-0">
+              <div className="relative w-40 h-56 md:w-48 md:h-68 shadow-2xl rounded-xl overflow-hidden mb-4 border border-white/10">
+                <Image
+                  src={selectedBook.image}
+                  alt={selectedBook.title}
+                  fill
+                  sizes="(max-width: 768px) 160px, 192px"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+              <span className="inline-block bg-indigo-500/15 border border-indigo-400/25 text-indigo-300 text-xs px-3 py-1 rounded-full font-semibold mb-2">
+                {selectedBook.category}
+              </span>
+              <div className="flex items-center gap-1.5 text-amber-400 font-bold text-sm">
+                <Star size={16} fill="currentColor" />
+                <span>{selectedBook.rating}</span>
+                <span className="text-neutral-500 font-normal">
+                  ({selectedBook.reviews_count.toLocaleString()} reviews)
+                </span>
+              </div>
+            </div>
+
+            {/* Right/Main Content Panel */}
+            <div className="md:w-3/5 p-6 md:p-8 flex flex-col justify-between space-y-6 overflow-y-auto max-h-[80vh] md:max-h-none">
+              <div className="space-y-4">
+                <div>
+                  <h2 className="font-display text-2xl font-extrabold tracking-tight md:text-3xl pr-8">
+                    {selectedBook.title}
+                  </h2>
+                  <p className="text-neutral-400 text-sm mt-1 font-medium">
+                    by <span className="text-white">{selectedBook.author}</span> · {selectedBook.published_year}
+                  </p>
+                </div>
+
+                {/* Keywords Tags */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                    Keywords / Tags
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {getKeywordsFromDescription(selectedBook.description, selectedBook.category).map((keyword, i) => (
+                      <span
+                        key={i}
+                        className="bg-white/5 border border-white/10 text-neutral-300 text-xs px-2.5 py-1 rounded-lg"
+                      >
+                        #{keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                    Synopsis
+                  </h3>
+                  <p className="text-neutral-300 text-xs md:text-sm leading-relaxed max-h-48 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
+                    {selectedBook.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Toolbar */}
+              <div className="pt-4 border-t border-white/5 space-y-3">
+                <div className="flex flex-col sm:flex-row gap-2.5">
+                  {/* Wishlist Toggle */}
+                  <button
+                    onClick={() => toggleWishlist(selectedBook.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition text-xs border ${
+                      wishlist.includes(selectedBook.id)
+                        ? "bg-rose-500/20 text-rose-300 border-rose-500/30 hover:bg-rose-500/30"
+                        : "bg-white text-neutral-950 border-white hover:bg-white/95"
+                    }`}
+                  >
+                    <Heart size={14} className={wishlist.includes(selectedBook.id) ? "fill-rose-400" : ""} />
+                    {wishlist.includes(selectedBook.id) ? "In Wishlist" : "Add to Wishlist"}
+                  </button>
+
+                  {/* Reading Status Selector dropdown */}
+                  <div className="flex-1 relative">
+                    <select
+                      value={readingList[selectedBook.id] || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "") {
+                          handleUpdateReadingStatus(selectedBook.id, "remove");
+                        } else {
+                          handleUpdateReadingStatus(selectedBook.id, val as ReadingStatus);
+                        }
+                      }}
+                      className="w-full h-[38px] bg-white/5 border border-white/10 hover:border-white/20 text-xs px-3 py-2 rounded-xl text-neutral-300 focus:outline-none focus:border-indigo-500 cursor-pointer transition [&>option]:bg-neutral-900"
+                    >
+                      <option value="">+ Add to Reading List</option>
+                      <option value="want-to-read">Want to Read</option>
+                      <option value="currently-reading">Currently Reading</option>
+                      <option value="completed">Completed</option>
+                      <option value="dropped">Dropped</option>
+                      {readingList[selectedBook.id] && <option value="">Remove from reading list</option>}
+                    </select>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/reviews?book=${selectedBook.id}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 py-2.5 text-xs font-semibold transition duration-300 text-white"
+                >
+                  Read Reviews & Write
+                  <ArrowRight size={12} />
+                </Link>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -287,6 +287,13 @@ function ReviewsContent() {
           </Link>
           <nav className="flex items-center gap-2">
             <Link
+              href="/feed"
+              className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"
+              aria-label="Community Feed"
+            >
+              <MessageSquare size={18} />
+            </Link>
+            <Link
               href="/profile"
               className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"
               aria-label="Profile"

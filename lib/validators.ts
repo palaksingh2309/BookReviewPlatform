@@ -39,4 +39,30 @@ export const reviewSchema = z.object({
   is_spoiler: z.boolean(),
 });
 
-export type ReviewInput = z.infer<typeof reviewSchema>;
+export type ReviewInput = z.infer<typeof reviewSchema>;
+
+export const postSchema = z.object({
+  content: z.string().max(2000, "Content must not exceed 2000 characters").optional().nullable(),
+  quote: z.string().max(1000, "Quote must not exceed 1000 characters").optional().nullable(),
+  short_story: z.string().max(5000, "Short story must not exceed 5000 characters").optional().nullable(),
+  book_reference_id: z.string().optional().nullable(),
+  image_urls: z.array(z.string()).optional(),
+}).refine((data) => {
+  const hasContent = data.content && data.content.trim().length > 0;
+  const hasQuote = data.quote && data.quote.trim().length > 0;
+  const hasStory = data.short_story && data.short_story.trim().length > 0;
+  return hasContent || hasQuote || hasStory;
+}, {
+  message: "A post must contain text content, a book quote, or a short story.",
+  path: ["content"],
+});
+
+export type PostInput = z.infer<typeof postSchema>;
+
+export const commentSchema = z.object({
+  content: z.string().min(1, "Comment must not be empty").max(1000, "Comment must not exceed 1000 characters"),
+  parent_id: z.string().uuid().optional().nullable(),
+});
+
+export type CommentInput = z.infer<typeof commentSchema>;
+

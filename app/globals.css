@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f0f6fc;
-  --foreground: #0a1730;
-  --primary: #0284c7;
-  --secondary: #14b8a6;
-  --card: #ffffff;
-  --border: #cbdff2;
+  --background: #faf6ee;
+  --foreground: #261a0f;
+  --primary: #800d20;
+  --secondary: #c5a059;
+  --card: #fdfbf7;
+  --border: #dfcea5;
 }
 
 @theme inline {
@@ -17,48 +17,48 @@
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-playfair);
 
-  /* Map neutral colors to a light-blue theme */
-  --color-neutral-950: #f0f6fc;
-  --color-neutral-900: #e4effa;
-  --color-neutral-800: #d8e8f8;
-  --color-neutral-700: #cbdff2;
-  --color-neutral-600: #b0ccfa;
-  --color-neutral-500: #70a6f2;
-  --color-neutral-400: #4776b0;
-  --color-neutral-300: #1e4277;
-  --color-neutral-200: #122a50;
-  --color-neutral-100: #0a1730;
-  --color-neutral-50: #050c1b;
+  /* Map neutral colors to a warm parchment/walnut café theme */
+  --color-neutral-950: #faf6ee;
+  --color-neutral-900: #f3ede2;
+  --color-neutral-800: #ebdcb9;
+  --color-neutral-700: #dfcea5;
+  --color-neutral-600: #c5a059;
+  --color-neutral-500: #a68334;
+  --color-neutral-400: #7f683f;
+  --color-neutral-300: #594528;
+  --color-neutral-200: #3e2e1a;
+  --color-neutral-100: #261a0f;
+  --color-neutral-5: #160e08;
 
   /* Invert black and white mappings for light theme compatibility */
-  --color-white: #0a1730;
-  --color-black: #f0f6fc;
+  --color-white: #261a0f;
+  --color-black: #faf6ee;
 
-  /* Light blue primary colors */
-  --color-indigo-950: #f0f9ff;
-  --color-indigo-900: #e0f2fe;
-  --color-indigo-800: #bae6fd;
-  --color-indigo-700: #0369a1;
-  --color-indigo-600: #0284c7;
-  --color-indigo-500: #0ea5e9;
-  --color-indigo-400: #38bdf8;
-  --color-indigo-300: #7dd3fc;
-  --color-indigo-200: #bae6fd;
-  --color-indigo-100: #e0f2fe;
-  --color-indigo-50: #f0f9ff;
+  /* Burgundy primary details */
+  --color-indigo-950: #fdf5f6;
+  --color-indigo-900: #fae3e6;
+  --color-indigo-800: #f3b8c0;
+  --color-indigo-700: #b3243c;
+  --color-indigo-600: #800d20;
+  --color-indigo-500: #991b1b;
+  --color-indigo-400: #b91c1c;
+  --color-indigo-300: #fca5a5;
+  --color-indigo-200: #fecaca;
+  --color-indigo-100: #fee2e2;
+  --color-indigo-5: #fef2f2;
 
-  /* Teal/cyan secondary colors */
-  --color-pink-950: #f0fdfa;
-  --color-pink-900: #ccfbf1;
-  --color-pink-800: #99f6e4;
-  --color-pink-700: #0f766e;
-  --color-pink-600: #0d9488;
-  --color-pink-500: #14b8a6;
-  --color-pink-400: #2dd4bf;
-  --color-pink-300: #5eead4;
-  --color-pink-200: #99f6e4;
-  --color-pink-100: #ccfbf1;
-  --color-pink-50: #f0fdfa;
+  /* Gold and Sage secondary details */
+  --color-pink-950: #faf8f0;
+  --color-pink-900: #f5ecd0;
+  --color-pink-800: #e6d5a1;
+  --color-pink-700: #a68334;
+  --color-pink-600: #c5a059;
+  --color-pink-500: #d4af37;
+  --color-pink-400: #fbbf24;
+  --color-pink-300: #fde047;
+  --color-pink-200: #fef08a;
+  --color-pink-100: #fef9c3;
+  --color-pink-5: #fefcbf;
 }
 
 html {
@@ -67,9 +67,9 @@ html {
 
 body {
   background: linear-gradient(to bottom,
-      #f0f6fc,
-      #e4effa,
-      #d8e8f8);
+      #faf6ee,
+      #f3ede2,
+      #ebdcb9);
   color: var(--foreground);
   min-height: 100vh;
 }
@@ -156,10 +156,10 @@ body {
 
 .hero-shimmer-text {
   background: linear-gradient(90deg,
-      #4f46e5,
-      #8b5cf6,
-      #06b6d4,
-      #4f46e5);
+      #800d20,
+      #c5a059,
+      #4f5d47,
+      #800d20);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -169,3 +169,7 @@ body {
 .hero-pulse-ring {
   animation: hero-pulse-ring 4s ease-in-out infinite;
 }
+
+.bg-library-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23dfcea5' fill-opacity='0.1'%3E%3Cpath d='M10 70h6v10h-6zm8-12h8v22h-8zm10 5h6v17h-6zm8-15h10v32H36zm12 18h6v14h-6zm8-10h8v24h-8zm10-18h8v42h-8z'/%3E%3C/g%3E%3C/svg%3E");
+}

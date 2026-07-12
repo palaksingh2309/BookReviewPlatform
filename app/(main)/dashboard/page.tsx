@@ -23,7 +23,19 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   const email = user?.email ?? "Reader";
-  const username = email.split("@")[0];
+  let username = email.split("@")[0];
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.username) {
+      username = profile.username;
+    }
+  }
 
   const { data: stats } = user ? await getReadingStats(supabase) : { data: null };
   const { count: reviewsCount } = user
@@ -93,6 +105,13 @@ export default async function DashboardPage() {
             BookVerse
           </Link>
           <nav className="flex items-center gap-2">
+            <Link
+              href="/feed"
+              className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"
+              aria-label="Community Feed"
+            >
+              <MessageSquare size={18} />
+            </Link>
             <Link
               href="/profile"
               className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"

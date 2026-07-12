@@ -11,4 +11,5 @@ const nextConfig: NextConfig = {
   },
 };
 
+// Touch config to force Turbopack compiler reload after global CSS changes
 export default nextConfig;

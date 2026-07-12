@@ -87,7 +87,7 @@ export default function Hero() {
     filteredBooks.find((book) => book.id === activeId) ?? filteredBooks[0] ?? books[0];
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden bg-library-pattern">
       {/* Hero-specific atmosphere */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/2 top-0 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-indigo-600/20 blur-[120px]" />

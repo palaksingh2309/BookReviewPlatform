@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { BookOpen, Settings, User } from "lucide-react";
+import { BookOpen, Settings, User, MessageSquare } from "lucide-react";
 
 import ProfileForm from "../../../components/profile/ProfileForm";
 import SignOutButton from "../../../components/auth/SignOutButton";
+import ProfilePostsList from "../../../components/profile/ProfilePostsList";
 import { createClient } from "../../../lib/supabase-server";
 
 export default async function ProfilePage() {
@@ -43,6 +44,13 @@ export default async function ProfilePage() {
             BookVerse
           </Link>
           <nav className="flex items-center gap-2">
+            <Link
+              href="/feed"
+              className="rounded-lg p-2 text-neutral-400 transition hover:bg-white/5 hover:text-white"
+              aria-label="Community Feed"
+            >
+              <MessageSquare size={18} />
+            </Link>
             <Link
               href="/profile"
               className="rounded-lg bg-white/10 p-2 text-white transition hover:bg-white/15"
@@ -106,6 +114,15 @@ export default async function ProfilePage() {
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm shadow-xl">
             <h2 className="font-display text-xl font-bold mb-6">Profile Settings</h2>
             <ProfileForm />
+          </div>
+        </div>
+
+        {/* User Posts Section */}
+        <div className="mt-12 space-y-6">
+          <div className="border-t border-white/10 pt-8">
+            <h2 className="font-display text-2xl font-bold text-white mb-2">My Community Posts</h2>
+            <p className="text-neutral-400 text-sm mb-6">Review your recent activity and engagements in the book community feed.</p>
+            {user?.id && <ProfilePostsList userId={user.id} />}
           </div>
         </div>
       </main>

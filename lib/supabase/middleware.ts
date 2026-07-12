@@ -59,6 +59,7 @@ export async function updateSession(request: NextRequest) {
   if (
     !user &&
     (request.nextUrl.pathname.startsWith("/dashboard") ||
+      request.nextUrl.pathname.startsWith("/feed") ||
       request.nextUrl.pathname.startsWith("/profile") ||
       request.nextUrl.pathname.startsWith("/settings") ||
       request.nextUrl.pathname.startsWith("/reading-list") ||
