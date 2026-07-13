@@ -17,6 +17,15 @@
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-playfair);
 
+  /* Cozy Reading Platform Brand Colors */
+  --color-brand-cream: #FAF7F2;
+  --color-brand-beige: #F5EBDD;
+  --color-brand-sand: #C8A97E;
+  --color-brand-brown: #5C4033;
+  --color-brand-green: #556B2F;
+  --color-brand-gold: #D4A017;
+  --color-brand-dark: #2A1B10;
+
   /* Map neutral colors to a warm parchment/walnut café theme */
   --color-neutral-950: #faf6ee;
   --color-neutral-900: #f3ede2;
@@ -172,4 +181,51 @@ body {
 
 .bg-library-pattern {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='%23dfcea5' fill-opacity='0.1'%3E%3Cpath d='M10 70h6v10h-6zm8-12h8v22h-8zm10 5h6v17h-6zm8-15h10v32H36zm12 18h6v14h-6zm8-10h8v24h-8zm10-18h8v42h-8z'/%3E%3C/g%3E%3C/svg%3E");
-}
+}
+
+/* Cozy Cafe & Library Custom Styles */
+.bg-paper-texture {
+  background-color: #faf7f2;
+  background-image: 
+    radial-gradient(#5c403305 1.5px, transparent 1.5px),
+    radial-gradient(#5c403303 1.5px, transparent 1.5px);
+  background-size: 24px 24px, 32px 32px;
+  background-position: 0 0, 12px 12px;
+}
+
+.book-flip-container {
+  perspective: 1500px;
+}
+
+.book-flip-cover {
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.8s ease;
+  transform-style: preserve-3d;
+}
+
+.book-flip-container:hover .book-flip-cover {
+  transform: rotateY(-135deg);
+  box-shadow: -10px 10px 20px rgba(42, 27, 16, 0.15);
+}
+
+.book-flip-page {
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.book-flip-container:hover .book-flip-page {
+  transform: translateZ(5px);
+}
+
+/* Custom soft glow shadows */
+.shadow-gold-glow {
+  box-shadow: 0 10px 30px -10px rgba(212, 160, 23, 0.25);
+}
+
+.shadow-brown-glow {
+  box-shadow: 0 10px 30px -10px rgba(92, 64, 51, 0.2);
+}
+
+.shadow-green-glow {
+  box-shadow: 0 10px 30px -10px rgba(85, 107, 47, 0.2);
+}
+
