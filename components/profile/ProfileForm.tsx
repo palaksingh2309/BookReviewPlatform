@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, CheckCircle, AlertCircle, Sparkles, User, FileText, Heart, Shield } from "lucide-react";
 import { getProfile, updateProfile } from "../../services/profile";
 
 export default function ProfileForm() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -72,6 +74,7 @@ export default function ProfileForm() {
           type: "success",
           message: "Your profile has been updated successfully!",
         });
+        router.refresh();
         // Clear success message after 4 seconds
         setTimeout(() => setStatus(null), 4000);
       }
