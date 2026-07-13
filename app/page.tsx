@@ -440,24 +440,25 @@ export default function Page() {
             {/* 12 Illustrated category cards */}
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
               {categories.map((cat, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: idx * 0.04 }}
-                  className={`group relative rounded-xl border ${cat.border} bg-brand-cream p-5 text-center flex flex-col justify-center items-center gap-3 transition-all duration-300 hover:shadow-gold-glow hover:-translate-y-1 hover:border-brand-gold/40 cursor-pointer`}
-                >
-                  <span className="text-3xl filter drop-shadow-sm group-hover:scale-110 transition duration-300">
-                    {cat.icon}
-                  </span>
-                  <h3 className="font-display font-bold text-sm sm:text-base text-brand-brown group-hover:text-brand-gold transition duration-300">
-                    {cat.name}
-                  </h3>
-                  <span className="absolute bottom-2 right-2 text-[10px] text-brand-brown/40 group-hover:text-brand-gold/70 opacity-0 group-hover:opacity-100 transition duration-300">
-                    Explore →
-                  </span>
-                </motion.div>
+                <Link href="/login" key={idx} className="block">
+                  <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: idx * 0.04 }}
+                    className={`group relative rounded-xl border ${cat.border} bg-brand-cream p-5 text-center flex flex-col justify-center items-center gap-3 transition-all duration-300 hover:shadow-gold-glow hover:-translate-y-1 hover:border-brand-gold/40 cursor-pointer`}
+                  >
+                    <span className="text-3xl filter drop-shadow-sm group-hover:scale-110 transition duration-300">
+                      {cat.icon}
+                    </span>
+                    <h3 className="font-display font-bold text-sm sm:text-base text-brand-brown group-hover:text-brand-gold transition duration-300">
+                      {cat.name}
+                    </h3>
+                    <span className="absolute bottom-2 right-2 text-[10px] text-brand-brown/40 group-hover:text-brand-gold/70 opacity-0 group-hover:opacity-100 transition duration-300">
+                      Explore →
+                    </span>
+                  </motion.div>
+                </Link>
               ))}
             </div>
           </div>
