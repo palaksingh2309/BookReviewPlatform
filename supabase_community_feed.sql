@@ -164,6 +164,11 @@ CREATE TABLE IF NOT EXISTS public.post_analytics (
     bookmarks_count INTEGER DEFAULT 0 CHECK (bookmarks_count >= 0)
 );
 
+-- Clean up any orphan posts or comments whose user_id does not exist in auth.users.
+-- This prevents constraint violations if test/dummy rows were deleted from auth.users.
+DELETE FROM public.posts WHERE user_id NOT IN (SELECT id FROM auth.users);
+DELETE FROM public.post_comments WHERE user_id NOT IN (SELECT id FROM auth.users);
+
 -- Repair any orphan user_ids in posts or comments by creating dummy profiles from auth.users.
 -- This ensures foreign key constraints below can be created successfully.
 INSERT INTO public.profiles (id, username, full_name)
