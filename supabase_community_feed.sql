@@ -52,22 +52,6 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 
--- Foreign keys for reliable profile joins (posts/comments user_id -> profiles.id)
-DO $$ BEGIN
-  ALTER TABLE public.posts
-    ADD CONSTRAINT posts_user_id_profiles_fkey
-    FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  ALTER TABLE public.post_comments
-    ADD CONSTRAINT post_comments_user_id_profiles_fkey
-    FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-
 -- Posts Table (supporting text, quote, short story, book reference, and soft deletes)
 CREATE TABLE IF NOT EXISTS public.posts (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -180,6 +164,36 @@ CREATE TABLE IF NOT EXISTS public.post_analytics (
     bookmarks_count INTEGER DEFAULT 0 CHECK (bookmarks_count >= 0)
 );
 
+-- Repair any orphan user_ids in posts or comments by creating dummy profiles from auth.users.
+-- This ensures foreign key constraints below can be created successfully.
+INSERT INTO public.profiles (id, username, full_name)
+SELECT u.id, 
+       'user_' || replace(u.id::text, '-', '') as username,
+       COALESCE(u.raw_user_meta_data->>'full_name', split_part(u.email, '@', 1)) as full_name
+FROM auth.users u
+WHERE u.id IN (
+    SELECT DISTINCT user_id FROM public.posts
+    UNION
+    SELECT DISTINCT user_id FROM public.post_comments
+)
+AND u.id NOT IN (SELECT id FROM public.profiles)
+ON CONFLICT (id) DO NOTHING;
+
+-- Foreign keys for reliable profile joins (posts/comments user_id -> profiles.id)
+DO $$ BEGIN
+  ALTER TABLE public.posts
+    ADD CONSTRAINT posts_user_id_profiles_fkey
+    FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.post_comments
+    ADD CONSTRAINT post_comments_user_id_profiles_fkey
+    FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- =========================================================================
 -- 3. Indexes for Search Performance and Joins
 -- =========================================================================
@@ -230,62 +244,95 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.post_analytics ENABLE ROW LEVEL SECURITY;
 
 -- Posts policies
+DROP POLICY IF EXISTS "Posts select policy" ON public.posts;
 CREATE POLICY "Posts select policy" ON public.posts FOR SELECT USING (deleted_at IS NULL);
+DROP POLICY IF EXISTS "Posts insert policy" ON public.posts;
 CREATE POLICY "Posts insert policy" ON public.posts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Posts update policy" ON public.posts;
 CREATE POLICY "Posts update policy" ON public.posts FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Posts delete policy" ON public.posts;
 CREATE POLICY "Posts delete policy" ON public.posts FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- Post Images policies
+DROP POLICY IF EXISTS "Post images select policy" ON public.post_images;
 CREATE POLICY "Post images select policy" ON public.post_images FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Post images insert policy" ON public.post_images;
 CREATE POLICY "Post images insert policy" ON public.post_images FOR INSERT TO authenticated WITH CHECK (
     EXISTS (SELECT 1 FROM public.posts WHERE id = post_id AND user_id = auth.uid())
 );
+DROP POLICY IF EXISTS "Post images delete policy" ON public.post_images;
 CREATE POLICY "Post images delete policy" ON public.post_images FOR DELETE TO authenticated USING (
     EXISTS (SELECT 1 FROM public.posts WHERE id = post_id AND user_id = auth.uid())
 );
 
 -- Post Comments policies
+DROP POLICY IF EXISTS "Comments select policy" ON public.post_comments;
 CREATE POLICY "Comments select policy" ON public.post_comments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Comments insert policy" ON public.post_comments;
 CREATE POLICY "Comments insert policy" ON public.post_comments FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Comments update policy" ON public.post_comments;
 CREATE POLICY "Comments update policy" ON public.post_comments FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Comments delete policy" ON public.post_comments;
 CREATE POLICY "Comments delete policy" ON public.post_comments FOR DELETE TO authenticated USING (
     auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.posts WHERE id = post_id AND user_id = auth.uid())
 );
 
 -- Post Likes policies
+DROP POLICY IF EXISTS "Likes select policy" ON public.post_likes;
 CREATE POLICY "Likes select policy" ON public.post_likes FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Likes insert policy" ON public.post_likes;
 CREATE POLICY "Likes insert policy" ON public.post_likes FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Likes delete policy" ON public.post_likes;
 CREATE POLICY "Likes delete policy" ON public.post_likes FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- Bookmarks policies
+DROP POLICY IF EXISTS "Bookmarks select policy" ON public.post_bookmarks;
 CREATE POLICY "Bookmarks select policy" ON public.post_bookmarks FOR SELECT TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Bookmarks insert policy" ON public.post_bookmarks;
 CREATE POLICY "Bookmarks insert policy" ON public.post_bookmarks FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Bookmarks delete policy" ON public.post_bookmarks;
 CREATE POLICY "Bookmarks delete policy" ON public.post_bookmarks FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- Shares policies
+DROP POLICY IF EXISTS "Shares select policy" ON public.post_shares;
 CREATE POLICY "Shares select policy" ON public.post_shares FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Shares insert policy" ON public.post_shares;
 CREATE POLICY "Shares insert policy" ON public.post_shares FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Shares delete policy" ON public.post_shares;
 CREATE POLICY "Shares delete policy" ON public.post_shares FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- Hashtags policies (viewable by all, insertable by authenticated users during post creations)
+DROP POLICY IF EXISTS "Hashtags select policy" ON public.hashtags;
 CREATE POLICY "Hashtags select policy" ON public.hashtags FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Hashtags insert policy" ON public.hashtags;
 CREATE POLICY "Hashtags insert policy" ON public.hashtags FOR INSERT TO authenticated WITH CHECK (true);
+DROP POLICY IF EXISTS "Hashtags update policy" ON public.hashtags;
+CREATE POLICY "Hashtags update policy" ON public.hashtags FOR UPDATE TO authenticated USING (true);
 
 -- Post Hashtags policies
+DROP POLICY IF EXISTS "Post hashtags select policy" ON public.post_hashtags;
 CREATE POLICY "Post hashtags select policy" ON public.post_hashtags FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Post hashtags insert/delete policy" ON public.post_hashtags;
 CREATE POLICY "Post hashtags insert/delete policy" ON public.post_hashtags FOR ALL TO authenticated USING (true);
 
 -- Mentions policies
+DROP POLICY IF EXISTS "Mentions select policy" ON public.post_mentions;
 CREATE POLICY "Mentions select policy" ON public.post_mentions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Mentions insert policy" ON public.post_mentions;
 CREATE POLICY "Mentions insert policy" ON public.post_mentions FOR INSERT TO authenticated WITH CHECK (true);
 
 -- Notifications policies
+DROP POLICY IF EXISTS "Notifications select policy" ON public.notifications;
 CREATE POLICY "Notifications select policy" ON public.notifications FOR SELECT TO authenticated USING (auth.uid() = recipient_id);
+DROP POLICY IF EXISTS "Notifications update policy" ON public.notifications;
 CREATE POLICY "Notifications update policy" ON public.notifications FOR UPDATE TO authenticated USING (auth.uid() = recipient_id) WITH CHECK (auth.uid() = recipient_id);
+DROP POLICY IF EXISTS "Notifications delete policy" ON public.notifications;
 CREATE POLICY "Notifications delete policy" ON public.notifications FOR DELETE TO authenticated USING (auth.uid() = recipient_id);
 
 -- Analytics policies
+DROP POLICY IF EXISTS "Analytics select policy" ON public.post_analytics;
 CREATE POLICY "Analytics select policy" ON public.post_analytics FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Analytics update policy" ON public.post_analytics;
 CREATE POLICY "Analytics update policy" ON public.post_analytics FOR UPDATE TO authenticated USING (true);
 
 -- =========================================================================
