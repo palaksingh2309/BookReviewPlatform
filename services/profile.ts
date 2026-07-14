@@ -1,6 +1,7 @@
-import { supabase } from "../lib/supabase";
+import { supabase as defaultSupabase } from "../lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export async function getProfile() {
+export async function getProfile(supabase = defaultSupabase) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -15,20 +16,36 @@ export async function getProfile() {
 
   return { data, error };
 }
-export async function updateProfile(profile: {
-  username: string;
-}) {
+
+export async function updateProfile(
+  profile: {
+    username: string;
+    full_name?: string | null;
+    bio?: string | null;
+    favorite_genre?: string | null;
+  },
+  supabase: SupabaseClient = defaultSupabase
+) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return;
+  if (!user) {
+    return { data: null, error: new Error("User not authenticated") };
+  }
 
-  return await supabase
+  const { data, error } = await supabase
     .from("profiles")
-    .upsert({
-      id: user.id,
-      username: profile.username,
+    .update({
+      username: profile.username.trim(),
+      full_name: profile.full_name?.trim() || null,
+      bio: profile.bio?.trim() || null,
+      favorite_genre: profile.favorite_genre || null,
       updated_at: new Date().toISOString(),
-    });
+    })
+    .eq("id", user.id)
+    .select()
+    .single();
+
+  return { data, error };
 }

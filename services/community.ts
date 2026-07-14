@@ -1,7 +1,78 @@
 import { supabase as defaultSupabase } from "../lib/supabase";
 import { Post, PostComment, Notification, Hashtag } from "../types/community";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const PAGE_SIZE = 10;
+
+function escapeSearchTerm(term: string): string {
+  return term.replace(/[%_,()]/g, "");
+}
+
+async function linkHashtagToPost(
+  postId: string,
+  name: string,
+  supabase: SupabaseClient
+) {
+  let { data: tag } = await supabase
+    .from("hashtags")
+    .select("id")
+    .eq("name", name)
+    .maybeSingle();
+
+  if (!tag) {
+    const { data: newTag, error: insertError } = await supabase
+      .from("hashtags")
+      .insert({ name })
+      .select("id")
+      .single();
+    if (insertError || !newTag) return;
+    tag = newTag;
+  }
+
+  await supabase
+    .from("post_hashtags")
+    .insert({ post_id: postId, hashtag_id: tag.id });
+}
+
+async function augmentPostsWithProfiles(posts: Post[], supabase: SupabaseClient) {
+  if (posts.length === 0) return posts;
+
+  const userIds = [...new Set(posts.map((p) => p.user_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username, full_name, avatar_url")
+    .in("id", userIds);
+
+  const profileMap = new Map(
+    (profiles || []).map((p) => [
+      p.id,
+      { username: p.username, full_name: p.full_name, avatar_url: p.avatar_url },
+    ])
+  );
+
+  return posts.map((p) => ({
+    ...p,
+    profiles: profileMap.get(p.user_id) || null,
+  }));
+}
+
+async function fetchPostById(postId: string, supabase: SupabaseClient) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      post_images (id, image_url),
+      books (id, title, author, image)
+    `)
+    .eq("id", postId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error || !data) return { data: null, error: error || new Error("Post not found") };
+
+  const [augmented] = await augmentPostsWithProfiles([data as Post], supabase);
+  return { data: augmented, error: null };
+}
 
 export async function getPostsFeed(
   options: {
@@ -18,16 +89,20 @@ export async function getPostsFeed(
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  if ((filter === "liked" || filter === "bookmarked") && !user) {
+    return { data: [], count: 0, error: null };
+  }
+
   // 1. Build columns selector dynamically
   let columns = `
     *,
-    profiles:profiles (username, full_name, avatar_url),
     post_images (id, image_url),
     books (id, title, author, image)
   `;
 
   const cleanedSearch = search.trim();
   const isHashtagSearch = cleanedSearch.startsWith("#");
+  let hashtagPostIds: string[] | null = null;
 
   if (user) {
     if (filter === "liked") {
@@ -38,9 +113,25 @@ export async function getPostsFeed(
   }
 
   if (cleanedSearch && isHashtagSearch) {
-    columns += `, post_hashtags!inner (
-      hashtag:hashtags!inner (name)
-    )`;
+    const hashtagName = cleanedSearch.slice(1).toLowerCase();
+    const { data: tagRows } = await supabase
+      .from("hashtags")
+      .select("id")
+      .eq("name", hashtagName)
+      .maybeSingle();
+
+    if (tagRows) {
+      const { data: links } = await supabase
+        .from("post_hashtags")
+        .select("post_id")
+        .eq("hashtag_id", tagRows.id);
+      hashtagPostIds = links?.map((l) => l.post_id) || [];
+      if (hashtagPostIds.length === 0) {
+        return { data: [], count: 0, error: null };
+      }
+    } else {
+      return { data: [], count: 0, error: null };
+    }
   }
 
   // 2. Build base query with exact count
@@ -65,26 +156,31 @@ export async function getPostsFeed(
 
   // 5. Handle Smart Search
   if (cleanedSearch) {
-    if (isHashtagSearch) {
-      const hashtagName = cleanedSearch.slice(1).toLowerCase();
-      query = query.eq("post_hashtags.hashtag.name", hashtagName);
-    } else {
-      // General search: text search matching content/quote/story or creator username
-      // We first check if we find profiles with this username to search their posts
+    if (isHashtagSearch && hashtagPostIds) {
+      query = query.in("id", hashtagPostIds);
+    } else if (!isHashtagSearch) {
+      const searchTerm = escapeSearchTerm(
+        cleanedSearch.startsWith("@") ? cleanedSearch.slice(1) : cleanedSearch
+      );
+
+      if (!searchTerm) {
+        return { data: [], count: 0, error: null };
+      }
+
       const { data: matchedProfiles } = await supabase
         .from("profiles")
         .select("id")
-        .ilike("username", `%${cleanedSearch}%`);
+        .ilike("username", `%${searchTerm}%`);
 
       const matchedUserIds = matchedProfiles?.map((p) => p.id) || [];
 
       if (matchedUserIds.length > 0) {
         query = query.or(
-          `content.ilike.%${cleanedSearch}%,quote.ilike.%${cleanedSearch}%,short_story.ilike.%${cleanedSearch}%,user_id.in.(${matchedUserIds.join(",")})`
+          `content.ilike.%${searchTerm}%,quote.ilike.%${searchTerm}%,short_story.ilike.%${searchTerm}%,user_id.in.(${matchedUserIds.join(",")})`
         );
       } else {
         query = query.or(
-          `content.ilike.%${cleanedSearch}%,quote.ilike.%${cleanedSearch}%,short_story.ilike.%${cleanedSearch}%`
+          `content.ilike.%${searchTerm}%,quote.ilike.%${searchTerm}%,short_story.ilike.%${searchTerm}%`
         );
       }
     }
@@ -99,6 +195,7 @@ export async function getPostsFeed(
   if (error) return { data: null, count: 0, error };
 
   let posts = (data as any || []) as Post[];
+  posts = await augmentPostsWithProfiles(posts, supabase);
 
   // 6. Augment post states (has liked, has bookmarked, has reposted)
   if (user && posts.length > 0) {
@@ -142,18 +239,7 @@ export async function getPostsFeed(
 export async function getPostDetails(postId: string, supabase = defaultSupabase) {
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: post, error: postError } = await supabase
-    .from("posts")
-    .select(`
-      *,
-      profiles:profiles (username, full_name, avatar_url),
-      post_images (id, image_url),
-      books (id, title, author, image)
-    `)
-    .eq("id", postId)
-    .is("deleted_at", null)
-    .maybeSingle();
-
+  const { data: post, error: postError } = await fetchPostById(postId, supabase);
   if (postError || !post) return { data: null, error: postError || new Error("Post not found") };
 
   const postObj = post as Post;
@@ -192,7 +278,7 @@ export async function getPostDetails(postId: string, supabase = defaultSupabase)
       // Fallback update if RPC is missing
       supabase
         .from("post_analytics")
-        .update({ views_count: (post.views_count || 0) + 1 })
+        .update({ views_count: 1 })
         .eq("post_id", postId);
     }
   });
@@ -203,16 +289,33 @@ export async function getPostDetails(postId: string, supabase = defaultSupabase)
 export async function getPostComments(postId: string, supabase = defaultSupabase) {
   const { data, error } = await supabase
     .from("post_comments")
-    .select(`
-      *,
-      profiles:profiles (username, full_name, avatar_url)
-    `)
+    .select("*")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
   if (error) return { data: null, error };
 
   const comments = (data || []) as PostComment[];
+
+  if (comments.length > 0) {
+    const userIds = [...new Set(comments.map((c) => c.user_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, full_name, avatar_url")
+      .in("id", userIds);
+
+    const profileMap = new Map(
+      (profiles || []).map((p) => [
+        p.id,
+        { username: p.username, full_name: p.full_name, avatar_url: p.avatar_url },
+      ])
+    );
+
+    comments.forEach((c) => {
+      c.profiles = profileMap.get(c.user_id) || null;
+    });
+  }
+
   const commentMap: { [key: string]: PostComment & { replies: PostComment[] } } = {};
   const rootComments: PostComment[] = [];
 
@@ -280,24 +383,17 @@ export async function createPost(
   const hashtags = extractHashtags(combinedText);
   if (hashtags.length > 0) {
     for (const name of hashtags) {
-      const { data: tag, error: tagError } = await supabase
-        .from("hashtags")
-        .upsert({ name }, { onConflict: "name" })
-        .select()
-        .single();
-
-      if (tag) {
-        await supabase
-          .from("post_hashtags")
-          .insert({ post_id: post.id, hashtag_id: tag.id });
-      }
+      await linkHashtagToPost(post.id, name, supabase);
     }
   }
 
   // 4. Extract and insert mentions (notifies mentioned users via DB trigger)
   await extractAndInsertMentions(post.id, combinedText, supabase);
 
-  return { data: post as Post, error: null };
+  const { data: fullPost, error: fetchError } = await fetchPostById(post.id, supabase);
+  if (fetchError || !fullPost) return { data: post as Post, error: null };
+
+  return { data: fullPost, error: null };
 }
 
 export async function addComment(
@@ -317,13 +413,23 @@ export async function addComment(
       parent_id: parentId,
       content,
     })
-    .select(`
-      *,
-      profiles:profiles (username, full_name, avatar_url)
-    `)
+    .select("*")
     .single();
 
-  return { data: data as PostComment | null, error };
+  if (error || !data) return { data: null, error };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("username, full_name, avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const comment = {
+    ...(data as PostComment),
+    profiles: profile || null,
+  };
+
+  return { data: comment, error: null };
 }
 
 export async function toggleLikePost(postId: string, supabase = defaultSupabase) {
@@ -422,13 +528,48 @@ export async function getNotifications(supabase = defaultSupabase) {
     .from("notifications")
     .select(`
       *,
-      sender_profile:profiles!notifications_sender_id_fkey (username, full_name, avatar_url),
       posts (content, quote, short_story)
     `)
     .eq("recipient_id", user.id)
     .order("created_at", { ascending: false });
 
-  return { data: data as Notification[] | null, error };
+  if (error) return { data: null, error };
+
+  const notifications = (data || []) as Notification[];
+
+  if (notifications.length > 0) {
+    const senderIds = [...new Set(notifications.map((n) => n.sender_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, full_name, avatar_url")
+      .in("id", senderIds);
+
+    const profileMap = new Map(
+      (profiles || []).map((p) => [
+        p.id,
+        { username: p.username, full_name: p.full_name, avatar_url: p.avatar_url },
+      ])
+    );
+
+    notifications.forEach((n) => {
+      n.sender_profile = profileMap.get(n.sender_id) || null;
+    });
+  }
+
+  return { data: notifications, error: null };
+}
+
+export async function getUnreadNotificationsCount(supabase = defaultSupabase) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { count: 0, error: null };
+
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_id", user.id)
+    .eq("read", false);
+
+  return { count: count || 0, error };
 }
 
 export async function markNotificationsAsRead(supabase = defaultSupabase) {
@@ -445,25 +586,36 @@ export async function markNotificationsAsRead(supabase = defaultSupabase) {
 }
 
 export async function getTrendingHashtags(supabase = defaultSupabase) {
-  // Aggregate tags by matching entries in post_hashtags (we pull top 6 tags)
-  const { data, error } = await supabase
+  const { data: links, error } = await supabase
     .from("post_hashtags")
     .select(`
       hashtag_id,
+      post_id,
       hashtag:hashtags!inner (id, name)
     `);
 
   if (error) return { data: null, error };
 
+  const postIds = [...new Set((links || []).map((row: { post_id: string }) => row.post_id))];
+  if (postIds.length === 0) return { data: [], error: null };
+
+  const { data: activePosts } = await supabase
+    .from("posts")
+    .select("id")
+    .in("id", postIds)
+    .is("deleted_at", null);
+
+  const activePostIds = new Set((activePosts || []).map((p) => p.id));
+
   const counts: { [key: string]: { name: string; id: string; count: number } } = {};
-  data.forEach((row: any) => {
-    if (row.hashtag) {
-      const tag = row.hashtag;
-      if (!counts[tag.name]) {
-        counts[tag.name] = { id: tag.id, name: tag.name, count: 0 };
-      }
-      counts[tag.name].count++;
+  (links || []).forEach((row: { post_id: string; hashtag: { id: string; name: string } | { id: string; name: string }[] | null }) => {
+    const rawTag = row.hashtag;
+    const tag = Array.isArray(rawTag) ? rawTag[0] : rawTag;
+    if (!tag || !activePostIds.has(row.post_id)) return;
+    if (!counts[tag.name]) {
+      counts[tag.name] = { id: tag.id, name: tag.name, count: 0 };
     }
+    counts[tag.name].count++;
   });
 
   const sortedTags = Object.values(counts)

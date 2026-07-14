@@ -10,8 +10,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { Post, PostComment } from "../../types/community";
-import { getPostComments } from "../../services/community";
-import { addCommentAction } from "../../actions/community";
+import { getPostCommentsAction, addCommentAction } from "../../actions/community";
 
 interface PostDetailsModalProps {
   postId: string;
@@ -30,11 +29,16 @@ export default function PostDetailsModal({
 }: PostDetailsModalProps) {
   const [comments, setComments] = useState<PostComment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [commentCount, setCommentCount] = useState(post.comments_count);
   const [rootReply, setRootReply] = useState("");
   const [submittingRoot, setSubmittingRoot] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setCommentCount(post.comments_count);
+  }, [post.comments_count, postId]);
 
   // Fetch comments on mount or when postId changes
   useEffect(() => {
@@ -44,11 +48,11 @@ export default function PostDetailsModal({
       try {
         setLoading(true);
         setError(null);
-        const { data, error: commentsErr } = await getPostComments(postId);
-        if (commentsErr) {
-          setError("Failed to load comments.");
+        const res = await getPostCommentsAction(postId);
+        if (!res.success) {
+          setError(res.error || "Failed to load comments.");
         } else {
-          setComments(data || []);
+          setComments(res.data || []);
         }
       } catch {
         setError("Failed to fetch comments.");
@@ -90,9 +94,11 @@ export default function PostDetailsModal({
 
   const handleAddComment = (newComment: PostComment) => {
     setComments((prev) => insertNewComment(prev, newComment));
-    // Calculate new total comment count
-    const totalCount = post.comments_count + 1;
-    onCommentsUpdated(postId, totalCount);
+    setCommentCount((prev) => {
+      const next = prev + 1;
+      onCommentsUpdated(postId, next);
+      return next;
+    });
   };
 
   const handlePostRootComment = async (e: React.FormEvent) => {

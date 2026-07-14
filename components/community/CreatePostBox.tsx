@@ -16,10 +16,11 @@ import {
 import { getBooks } from "../../services/books";
 import { createPostAction } from "../../actions/community";
 import { Book } from "../../types/book";
+import { Post } from "../../types/community";
 import { supabase } from "../../lib/supabase";
 
 interface CreatePostBoxProps {
-  onPostCreated: () => void;
+  onPostCreated: (post?: Post) => void;
   userInitials: string;
 }
 
@@ -192,7 +193,7 @@ export default function CreatePostBox({ onPostCreated, userInitials }: CreatePos
         // Clear previews
         images.forEach((img) => URL.revokeObjectURL(img.preview));
         setImages([]);
-        onPostCreated();
+        onPostCreated(response.data ?? undefined);
       }
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");

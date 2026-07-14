@@ -27,7 +27,7 @@ import PostCard from "../../../components/community/PostCard";
 import PostDetailsModal from "../../../components/community/PostDetailsModal";
 import NotificationsModal from "../../../components/community/NotificationsModal";
 
-import { getPostsFeed, getTrendingHashtags } from "../../../services/community";
+import { getPostsFeedAction, getPostDetailsAction, getTrendingHashtagsAction, getUnreadNotificationsCountAction } from "../../../actions/community";
 import { getBooks } from "../../../services/books";
 import { Post, Hashtag } from "../../../types/community";
 import { Book } from "../../../types/book";
@@ -56,6 +56,8 @@ function FeedContent() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [feedRefreshKey, setFeedRefreshKey] = useState(0);
+  const [feedError, setFeedError] = useState<string | null>(null);
 
   // Modals & Panels
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
@@ -81,6 +83,16 @@ function FeedContent() {
     loadUser();
   }, []);
 
+  useEffect(() => {
+    async function loadUnreadCount() {
+      const res = await getUnreadNotificationsCountAction();
+      if (res.success) {
+        setUnreadNotifications(res.count ?? 0);
+      }
+    }
+    loadUnreadCount();
+  }, []);
+
   // 2. Sync URL search parameters
   useEffect(() => {
     const urlQuery = searchParams.get("search") || "";
@@ -101,16 +113,25 @@ function FeedContent() {
           setLoadingMore(true);
         }
 
-        const { data, count, error } = await getPostsFeed({
+        setFeedError(null);
+
+        const res = await getPostsFeedAction({
           page,
           search: appliedSearch,
           filter: activeTab,
         });
 
-        if (!error && data) {
-          setPosts((prev) => (page === 1 ? data : [...prev, ...data]));
-          // Determine if we reached the end of lists
-          setHasMore(data.length > 0 && posts.length + data.length < count);
+        if (res.success && res.data) {
+          const data = res.data;
+          const count = res.count ?? 0;
+          setPosts((prev) => {
+            const updated = page === 1 ? data : [...prev, ...data];
+            setHasMore(data.length > 0 && updated.length < count);
+            return updated;
+          });
+        } else {
+          setFeedError(res.error || "Failed to load community feed.");
+          if (page === 1) setPosts([]);
         }
       } catch (err) {
         console.error("Error loading feed:", err);
@@ -121,23 +142,22 @@ function FeedContent() {
     }
 
     loadFeed();
-  }, [page, appliedSearch, activeTab]);
+  }, [page, appliedSearch, activeTab, feedRefreshKey]);
 
-  // 4. Load sidebar content (hashtags & trending books) on mount/tab shifts
+  // 4. Load sidebar content once on mount
   useEffect(() => {
     async function loadSidebar() {
-      const { data: tags } = await getTrendingHashtags();
-      setTrendingTags(tags || []);
+      const tagsRes = await getTrendingHashtagsAction();
+      setTrendingTags(tagsRes.success ? tagsRes.data || [] : []);
 
       const { data: books } = await getBooks();
-      // filter trending or top-rated ones for recommendations
       const filtered = (books || [])
         .filter((b) => b.is_trending || b.is_top_rated)
         .slice(0, 4);
       setRecommendedBooks(filtered);
     }
     loadSidebar();
-  }, [posts]);
+  }, []);
 
   // 5. Infinite Scroll Observer
   useEffect(() => {
@@ -173,16 +193,30 @@ function FeedContent() {
     router.push("/feed");
   };
 
-  const handlePostCreated = () => {
-    setPage(1);
+  const handlePostCreated = (newPost?: Post) => {
+    if (newPost && activeTab === "all" && !appliedSearch) {
+      setPosts((prev) => [newPost, ...prev.filter((p) => p.id !== newPost.id)]);
+      return;
+    }
+
     setPosts([]);
+    setPage(1);
     setHasMore(true);
-    // Reload first page
-    router.refresh();
+    setFeedRefreshKey((key) => key + 1);
   };
 
-  const handleCommentClicked = (postId: string) => {
-    const matched = posts.find((p) => p.id === postId);
+  const handlePostDeleted = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handleCommentClicked = async (postId: string) => {
+    let matched = posts.find((p) => p.id === postId);
+    if (!matched) {
+      const res = await getPostDetailsAction(postId);
+      if (res.success && res.data) {
+        matched = res.data;
+      }
+    }
     if (matched) {
       setSelectedPost(matched);
       setSelectedPostId(postId);
@@ -336,6 +370,12 @@ function FeedContent() {
             </div>
 
             {/* Post feed rendering */}
+            {feedError && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {feedError}
+              </div>
+            )}
+
             {loading ? (
               <div className="flex h-64 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
@@ -344,8 +384,14 @@ function FeedContent() {
               <div className="flex flex-col items-center justify-center rounded-2xl border border-white/5 bg-white/[0.01] py-20 text-center text-neutral-500 space-y-4">
                 <MessageSquare size={36} className="text-neutral-700" />
                 <div>
-                  <h3 className="text-base font-bold text-white">Quiet in this tab</h3>
-                  <p className="text-sm text-neutral-600 mt-1 max-w-[280px]">No posts match your filters or search keywords. Try creating one!</p>
+                  <h3 className="text-base font-bold text-white">
+                    {feedError ? "Could not load posts" : "Quiet in this tab"}
+                  </h3>
+                  <p className="text-sm text-neutral-600 mt-1 max-w-[280px]">
+                    {feedError
+                      ? "Please refresh the page or try again in a moment."
+                      : "No posts match your filters or search keywords. Try creating one!"}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -356,7 +402,7 @@ function FeedContent() {
                     post={post}
                     currentUserId={currentUserId}
                     onCommentClick={handleCommentClicked}
-                    onPostDeleted={handlePostCreated}
+                    onPostDeleted={handlePostDeleted}
                   />
                 ))}
 

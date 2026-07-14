@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle, AlertCircle, Sparkles, User, FileText, Heart, Shield } from "lucide-react";
-import { getProfile, updateProfile } from "../../services/profile";
+import { Loader2, CheckCircle, AlertCircle, Sparkles, User, FileText, Heart } from "lucide-react";
+import { getProfile } from "../../services/profile";
+import { updateProfileAction } from "../../actions/profile";
 
 export default function ProfileForm() {
   const router = useRouter();
@@ -28,13 +29,13 @@ export default function ProfileForm() {
             console.error("Error fetching profile:", error.message);
           }
           if (data) {
-          setFormData({
-            username: data.username || "",
-            full_name: data.full_name || "",
-            bio: data.bio || "",
-            favorite_genre: data.favorite_genre || "",
-          });
-        }
+            setFormData({
+              username: data.username || "",
+              full_name: data.full_name || "",
+              bio: data.bio || "",
+              favorite_genre: data.favorite_genre || "",
+            });
+          }
         }
       } catch (err) {
         console.error("Unexpected profile fetch error:", err);
@@ -63,11 +64,11 @@ export default function ProfileForm() {
     setStatus(null);
 
     try {
-      const response = await updateProfile(formData);
-      if (response && response.error) {
+      const response = await updateProfileAction(formData);
+      if (!response.success) {
         setStatus({
           type: "error",
-          message: response.error.message || "Failed to update profile.",
+          message: response.error || "Failed to update profile.",
         });
       } else {
         setStatus({
@@ -75,7 +76,6 @@ export default function ProfileForm() {
           message: "Your profile has been updated successfully!",
         });
         router.refresh();
-        // Clear success message after 4 seconds
         setTimeout(() => setStatus(null), 4000);
       }
     } catch (err) {
@@ -117,7 +117,6 @@ export default function ProfileForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid gap-6 sm:grid-cols-2">
-          {/* Username */}
           <div className="space-y-2">
             <label htmlFor="username" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
               <User size={16} className="text-indigo-400" />
@@ -134,36 +133,34 @@ export default function ProfileForm() {
             />
           </div>
 
-          {/* Full Name */}
           <div className="space-y-2">
-            <label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium text-neutral-400">
-              <Shield size={16} className="text-neutral-500" />
-              Full Name (Read-only)
+            <label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
+              <User size={16} className="text-indigo-400" />
+              Full Name
             </label>
             <input
               id="fullName"
               type="text"
-              disabled
               placeholder="e.g. Jane Doe"
               value={formData.full_name}
-              className="w-full rounded-xl border border-white/10 bg-neutral-900/50 px-4 py-3 text-neutral-400 outline-none cursor-not-allowed opacity-60"
+              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20"
             />
           </div>
         </div>
 
-        {/* Favorite Genre */}
         <div className="space-y-2">
-          <label htmlFor="favoriteGenre" className="flex items-center gap-2 text-sm font-medium text-neutral-400">
-            <Heart size={16} className="text-neutral-500" />
-            Favorite Genre (Read-only)
+          <label htmlFor="favoriteGenre" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
+            <Heart size={16} className="text-indigo-400" />
+            Favorite Genre
           </label>
           <select
             id="favoriteGenre"
-            disabled
             value={formData.favorite_genre}
-            className="w-full rounded-xl border border-white/10 bg-neutral-900/50 px-4 py-3 text-neutral-400 outline-none cursor-not-allowed opacity-60 appearance-none [&>option]:bg-neutral-900"
+            onChange={(e) => setFormData({ ...formData, favorite_genre: e.target.value })}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20 appearance-none [&>option]:bg-neutral-900"
           >
-            <option value="" disabled>Select your favorite genre</option>
+            <option value="">Select your favorite genre</option>
             {genres.map((g) => (
               <option key={g} value={g}>
                 {g}
@@ -172,19 +169,19 @@ export default function ProfileForm() {
           </select>
         </div>
 
-        {/* Bio */}
         <div className="space-y-2">
-          <label htmlFor="bio" className="flex items-center gap-2 text-sm font-medium text-neutral-400">
-            <FileText size={16} className="text-neutral-500" />
-            Bio (Read-only)
+          <label htmlFor="bio" className="flex items-center gap-2 text-sm font-medium text-neutral-300">
+            <FileText size={16} className="text-indigo-400" />
+            Bio
           </label>
           <textarea
             id="bio"
             rows={4}
-            disabled
-            placeholder="No biography details provided."
+            placeholder="Tell the community about your reading journey..."
             value={formData.bio}
-            className="w-full rounded-xl border border-white/10 bg-neutral-900/50 px-4 py-3 text-neutral-400 outline-none cursor-not-allowed opacity-60 resize-none"
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+            maxLength={500}
+            className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none transition placeholder:text-neutral-500 focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20 resize-none"
           />
         </div>
 
@@ -201,7 +198,7 @@ export default function ProfileForm() {
           ) : (
             <>
               <Sparkles size={16} />
-              Save Username
+              Save Profile
             </>
           )}
         </button>

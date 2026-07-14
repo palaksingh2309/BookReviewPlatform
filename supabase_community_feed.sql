@@ -52,9 +52,21 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 
--- =========================================================================
--- 2. Create Community Feed Tables
--- =========================================================================
+-- Foreign keys for reliable profile joins (posts/comments user_id -> profiles.id)
+DO $$ BEGIN
+  ALTER TABLE public.posts
+    ADD CONSTRAINT posts_user_id_profiles_fkey
+    FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.post_comments
+    ADD CONSTRAINT post_comments_user_id_profiles_fkey
+    FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 
 -- Posts Table (supporting text, quote, short story, book reference, and soft deletes)
 CREATE TABLE IF NOT EXISTS public.posts (
@@ -488,6 +500,50 @@ DROP TRIGGER IF EXISTS trigger_post_mention_notification ON public.post_mentions
 CREATE TRIGGER trigger_post_mention_notification
     AFTER INSERT ON public.post_mentions
     FOR EACH ROW EXECUTE FUNCTION public.handle_post_mention_notification();
+
+-- Share notification trigger
+CREATE OR REPLACE FUNCTION public.handle_post_share_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_post_owner_id UUID;
+BEGIN
+    SELECT user_id INTO v_post_owner_id FROM public.posts WHERE id = NEW.post_id;
+    IF (v_post_owner_id IS NOT NULL AND v_post_owner_id != NEW.user_id) THEN
+        INSERT INTO public.notifications (recipient_id, sender_id, type, post_id)
+        VALUES (v_post_owner_id, NEW.user_id, 'share', NEW.post_id)
+        ON CONFLICT DO NOTHING;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_post_share_notification ON public.post_shares;
+CREATE TRIGGER trigger_post_share_notification
+    AFTER INSERT ON public.post_shares
+    FOR EACH ROW EXECUTE FUNCTION public.handle_post_share_notification();
+
+-- Delete share notification when unshared
+CREATE OR REPLACE FUNCTION public.handle_post_unshare_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_post_owner_id UUID;
+BEGIN
+    SELECT user_id INTO v_post_owner_id FROM public.posts WHERE id = OLD.post_id;
+    IF (v_post_owner_id IS NOT NULL) THEN
+        DELETE FROM public.notifications
+        WHERE recipient_id = v_post_owner_id
+          AND sender_id = OLD.user_id
+          AND type = 'share'
+          AND post_id = OLD.post_id;
+    END IF;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trigger_post_unshare_notification ON public.post_shares;
+CREATE TRIGGER trigger_post_unshare_notification
+    AFTER DELETE ON public.post_shares
+    FOR EACH ROW EXECUTE FUNCTION public.handle_post_unshare_notification();
 
 -- =========================================================================
 -- 7. Supabase Storage Buckets and Security Policies

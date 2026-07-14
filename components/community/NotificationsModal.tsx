@@ -13,8 +13,7 @@ import {
   CheckCheck
 } from "lucide-react";
 import { Notification } from "../../types/community";
-import { getNotifications } from "../../services/community";
-import { markNotificationsAsReadAction } from "../../actions/community";
+import { getNotificationsAction, markNotificationsAsReadAction } from "../../actions/community";
 
 interface NotificationsModalProps {
   isOpen: boolean;
@@ -49,11 +48,11 @@ export default function NotificationsModal({
       try {
         setLoading(true);
         setError(null);
-        const { data, error: err } = await getNotifications();
-        if (err) {
-          setError("Failed to load notifications.");
+        const res = await getNotificationsAction();
+        if (!res.success) {
+          setError(res.error || "Failed to load notifications.");
         } else {
-          setNotifications(data || []);
+          setNotifications(res.data || []);
         }
       } catch {
         setError("Failed to fetch notifications.");

@@ -30,7 +30,7 @@ interface PostCardProps {
   post: Post;
   currentUserId: string | null;
   onCommentClick: (postId: string) => void;
-  onPostDeleted?: () => void;
+  onPostDeleted?: (postId: string) => void;
 }
 
 export default function PostCard({ post, currentUserId, onCommentClick, onPostDeleted }: PostCardProps) {
@@ -76,11 +76,11 @@ export default function PostCard({ post, currentUserId, onCommentClick, onPostDe
       }
       if (part.startsWith("@") && part.length > 1) {
         const cleanUser = part.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, "");
-        // Search user feed
+        const username = cleanUser.startsWith("@") ? cleanUser.slice(1) : cleanUser;
         return (
           <Link
             key={i}
-            href={`/feed?search=${encodeURIComponent(cleanUser)}`}
+            href={`/feed?search=${encodeURIComponent(username)}`}
             className="text-pink-400 font-semibold transition hover:text-pink-300 hover:underline"
           >
             {part}
@@ -205,7 +205,7 @@ export default function PostCard({ post, currentUserId, onCommentClick, onPostDe
       const res = await deletePostAction(post.id);
       if (res.success) {
         showToast("Post deleted successfully.", "success");
-        if (onPostDeleted) onPostDeleted();
+        if (onPostDeleted) onPostDeleted(post.id);
       } else {
         showToast(res.error || "Failed to delete post.", "error");
       }

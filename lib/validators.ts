@@ -65,4 +65,17 @@ export const commentSchema = z.object({
 });
 
 export type CommentInput = z.infer<typeof commentSchema>;
-
+
+export const profileSchema = z.object({
+  username: z
+    .string()
+    .min(2, "Username must be at least 2 characters")
+    .max(30, "Username must not exceed 30 characters")
+    .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+  full_name: z.string().max(100, "Full name must not exceed 100 characters").optional().nullable(),
+  bio: z.string().max(500, "Bio must not exceed 500 characters").optional().nullable(),
+  favorite_genre: z.string().optional().nullable(),
+});
+
+export type ProfileInput = z.infer<typeof profileSchema>;
+

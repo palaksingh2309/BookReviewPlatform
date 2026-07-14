@@ -11,6 +11,12 @@ import {
   addComment,
   deletePost,
   markNotificationsAsRead,
+  getPostsFeed,
+  getPostDetails,
+  getPostComments,
+  getNotifications,
+  getUnreadNotificationsCount,
+  getTrendingHashtags,
 } from "../services/community";
 
 export async function createPostAction(formData: {
@@ -114,4 +120,51 @@ export async function markNotificationsAsReadAction() {
 
   revalidatePath("/feed");
   return { success: true };
+}
+
+export async function getPostsFeedAction(options: {
+  page?: number;
+  search?: string;
+  filter?: "all" | "liked" | "bookmarked";
+  userId?: string;
+}) {
+  const supabase = await createClient();
+  const { data, count, error } = await getPostsFeed(options, supabase);
+  if (error) return { success: false, error: error.message };
+  return { success: true, data, count };
+}
+
+export async function getPostDetailsAction(postId: string) {
+  const supabase = await createClient();
+  const { data, error } = await getPostDetails(postId, supabase);
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function getPostCommentsAction(postId: string) {
+  const supabase = await createClient();
+  const { data, error } = await getPostComments(postId, supabase);
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function getNotificationsAction() {
+  const supabase = await createClient();
+  const { data, error } = await getNotifications(supabase);
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+}
+
+export async function getUnreadNotificationsCountAction() {
+  const supabase = await createClient();
+  const { count, error } = await getUnreadNotificationsCount(supabase);
+  if (error) return { success: false, error: error.message };
+  return { success: true, count };
+}
+
+export async function getTrendingHashtagsAction() {
+  const supabase = await createClient();
+  const { data, error } = await getTrendingHashtags(supabase);
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
 }
