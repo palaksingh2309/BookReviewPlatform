@@ -26,48 +26,48 @@
   --color-brand-gold: #D4A017;
   --color-brand-dark: #2A1B10;
 
-  /* Map neutral colors to a warm parchment/walnut café theme */
-  --color-neutral-950: #faf6ee;
-  --color-neutral-900: #f3ede2;
-  --color-neutral-800: #ebdcb9;
-  --color-neutral-700: #dfcea5;
-  --color-neutral-600: #c5a059;
-  --color-neutral-500: #a68334;
-  --color-neutral-400: #7f683f;
-  --color-neutral-300: #594528;
-  --color-neutral-200: #3e2e1a;
-  --color-neutral-100: #261a0f;
-  --color-neutral-5: #160e08;
+  /* Map neutral colors to a warm parchment/walnut café theme - refined for readability */
+  --color-neutral-950: #faf8f5; /* clean light parchment background */
+  --color-neutral-900: #f3ede4; /* soft light beige/cream for cards */
+  --color-neutral-800: #e2d6c5; /* beige borders / divider lines */
+  --color-neutral-700: #c4b4a1; /* active border accent */
+  --color-neutral-600: #8a7560; /* muted grey-brown icons / inactive items */
+  --color-neutral-500: #6e5843; /* rich clay brown for metadata, placeholders, secondary labels */
+  --color-neutral-400: #594532; /* readable medium-dark brown for subtitles/descriptions */
+  --color-neutral-300: #473423; /* walnut brown for standard text */
+  --color-neutral-200: #332212; /* dark coffee brown for bold text */
+  --color-neutral-100: #1f1207; /* deepest espresso brown for headings and active titles */
+  --color-neutral-5: #0c0602;
 
   /* Invert black and white mappings for light theme compatibility */
-  --color-white: #261a0f;
-  --color-black: #faf6ee;
+  --color-white: #1f1207; /* main text: deepest espresso brown */
+  --color-black: #faf8f5; /* main background: parchment white */
 
-  /* Burgundy primary details */
-  --color-indigo-950: #fdf5f6;
-  --color-indigo-900: #fae3e6;
-  --color-indigo-800: #f3b8c0;
-  --color-indigo-700: #b3243c;
-  --color-indigo-600: #800d20;
-  --color-indigo-500: #991b1b;
-  --color-indigo-400: #b91c1c;
-  --color-indigo-300: #fca5a5;
-  --color-indigo-200: #fecaca;
-  --color-indigo-100: #fee2e2;
-  --color-indigo-5: #fef2f2;
+  /* Burgundy primary details - high contrast crimson */
+  --color-indigo-950: #fff9f9;
+  --color-indigo-900: #fdebeb;
+  --color-indigo-800: #fcd3d3;
+  --color-indigo-700: #c23b53;
+  --color-indigo-600: #8c1b2f;
+  --color-indigo-500: #a32c3f;
+  --color-indigo-400: #a32c3f; /* highly readable crimson links/hashtags */
+  --color-indigo-300: #7d1020; /* deep red links hover */
+  --color-indigo-200: #fbd2d7;
+  --color-indigo-100: #ffe3e6;
+  --color-indigo-5: #fff5f6;
 
-  /* Gold and Sage secondary details */
-  --color-pink-950: #faf8f0;
-  --color-pink-900: #f5ecd0;
-  --color-pink-800: #e6d5a1;
-  --color-pink-700: #a68334;
-  --color-pink-600: #c5a059;
-  --color-pink-500: #d4af37;
-  --color-pink-400: #fbbf24;
-  --color-pink-300: #fde047;
-  --color-pink-200: #fef08a;
-  --color-pink-100: #fef9c3;
-  --color-pink-5: #fefcbf;
+  /* Gold secondary details - warm rich antique gold */
+  --color-pink-950: #fff9f0;
+  --color-pink-900: #fdf5e2;
+  --color-pink-800: #fae9c3;
+  --color-pink-700: #a6701e;
+  --color-pink-600: #8f5c0c;
+  --color-pink-500: #a6701e;
+  --color-pink-400: #8f5c0c; /* highly readable antique gold mentions */
+  --color-pink-300: #754804; /* deep gold hover */
+  --color-pink-200: #fce2a6;
+  --color-pink-100: #fef0cb;
+  --color-pink-5: #fff9e6;
 }
 
 html {
@@ -76,9 +76,9 @@ html {
 
 body {
   background: linear-gradient(to bottom,
-      #faf6ee,
-      #f3ede2,
-      #ebdcb9);
+      #faf8f5,
+      #f3ede4,
+      #e2d6c5);
   color: var(--foreground);
   min-height: 100vh;
 }
@@ -227,5 +227,27 @@ body {
 
 .shadow-green-glow {
   box-shadow: 0 10px 30px -10px rgba(85, 107, 47, 0.2);
+}
+
+/* Premium Contrast & UI Overrides for Buttons and Active Elements */
+.bg-indigo-600,
+.bg-indigo-500,
+.bg-indigo-700,
+.hover\:bg-indigo-600:hover,
+.hover\:bg-indigo-750:hover,
+.hover\:bg-indigo-700:hover,
+.hover\:bg-indigo-500:hover {
+  color: #faf8f5 !important;
+}
+
+.bg-indigo-600 svg,
+.bg-indigo-500 svg,
+.bg-indigo-700 svg,
+.hover\:bg-indigo-600:hover svg,
+.hover\:bg-indigo-750:hover svg,
+.hover\:bg-indigo-700:hover svg,
+.hover\:bg-indigo-500:hover svg {
+  color: #faf8f5 !important;
+  stroke: #faf8f5 !important;
 }
 
